@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pengajuan Surat - NamaWeb</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- ============================================
+       HALAMAN PENGAJUAN SURAT KETERANGAN USAHA
+       Layout: Sidebar (kiri) + Form pengajuan (kanan)
+       ============================================ -->
+  <div class="layout-dashboard">
+
+    <!-- Overlay gelap mobile -->
+    <div id="overlaySidebar" class="overlay-sidebar"></div>
+
+    <!-- SIDEBAR -->
+    <aside id="sidebar" class="sidebar">
+      <div class="sidebar-header">*Logo + NamaWeb</div>
+      <div class="sidebar-cari">
+        <input type="search" class="input-cari" placeholder="Search" />
+      </div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="sidebar-link">
+          <span class="sidebar-link-ikon">📊</span>Dashboard
+        </a>
+        <div class="sidebar-label">Ajukan Surat <span class="sidebar-label-ikon">∧</span></div>
+        <div class="sidebar-sub">
+          <a href="pengajuan.html?jenis=nikah" class="sidebar-link">
+            <span class="sidebar-link-ikon">✉</span>Surat Pengantar Nikah
+          </a>
+          <a href="pengajuan.html?jenis=usaha" class="sidebar-link aktif">
+            <span class="sidebar-link-ikon">✉</span>Surat Keterangan Usaha
+          </a>
+          <a href="pengajuan.html?jenis=domisili" class="sidebar-link">
+            <span class="sidebar-link-ikon">✉</span>Surat Keterangan Domisili
+          </a>
+          <a href="pengajuan.html?jenis=lainnya" class="sidebar-link">
+            <span class="sidebar-link-ikon">✉</span>Surat lorem ipsum
+          </a>
+        </div>
+        <div class="sidebar-label">Informasi <span class="sidebar-label-ikon">∧</span></div>
+        <div class="sidebar-sub">
+          <a href="riwayat.html" class="sidebar-link">
+            <span class="sidebar-link-ikon">🕐</span>Riwayat Pengajuan
+          </a>
+          <a href="profil.html" class="sidebar-link">
+            <span class="sidebar-link-ikon">👤</span>Profil Saya
+          </a>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- KONTEN UTAMA -->
+    <div class="konten-dashboard">
+
+      <!-- Header atas -->
+      <header class="header-dashboard">
+        <div style="display:flex;align-items:center;gap:0.75rem;">
+          <button id="tombolBukaSidebar" class="tombol-hamburger" style="display:flex;">
+            <span></span><span></span><span></span>
+          </button>
+          <div class="header-pengguna">
+            <h3>Halo, Nama User</h3>
+            <span>Warga</span>
+          </div>
+        </div>
+        <button class="avatar-pengguna" onclick="logout()" title="Keluar">👤</button>
+      </header>
+
+      <!-- Area form pengajuan -->
+      <main class="area-konten">
+
+        <!-- Judul halaman pengajuan -->
+        <div class="halaman-judul">
+          <div>
+            <h1>Permohonan Surat Keterangan Usaha</h1>
+            <p>Isi formulir berikut dengan data yang benar dan lengkap</p>
+          </div>
+        </div>
+
+        <!-- Form pengajuan surat -->
+        <form id="formPengajuan" onsubmit="kirimPengajuan(event)">
+
+          <!-- Bagian 1: Isi Data Diri -->
+          <div class="kartu-form">
+            <h3>Isi Data Diri</h3>
+
+            <!-- Grid 2 kolom untuk input -->
+            <div class="grid-form-2">
+
+              <!-- Input: Nama Lengkap -->
+              <div class="grup-form">
+                <label for="namaLengkap">Nama Lengkap</label>
+                <input
+                  type="text"
+                  id="namaLengkap"
+                  class="input-form"
+                  placeholder="Value"
+                  required
+                />
+              </div>
+
+              <!-- Input: NIK -->
+              <div class="grup-form">
+                <label for="nik">NIK</label>
+                <input
+                  type="text"
+                  id="nik"
+                  class="input-form"
+                  placeholder="Value"
+                  maxlength="16"
+                  pattern="[0-9]{16}"
+                  title="NIK harus 16 digit angka"
+                  required
+                />
+              </div>
+
+              <!-- Input: No. KK -->
+              <div class="grup-form">
+                <label for="noKK">No. KK</label>
+                <input
+                  type="text"
+                  id="noKK"
+                  class="input-form"
+                  placeholder="Value"
+                  required
+                />
+              </div>
+
+              <!-- Input: No. WhatsApp -->
+              <div class="grup-form">
+                <label for="noWA">No. Whatsapp</label>
+                <input
+                  type="tel"
+                  id="noWA"
+                  class="input-form"
+                  placeholder="Value"
+                  required
+                />
+              </div>
+
+              <!-- Input: Alamat (span 2 kolom) -->
+              <div class="grup-form" style="grid-column:1/-1;">
+                <label for="alamat">Alamat</label>
+                <input
+                  type="text"
+                  id="alamat"
+                  class="input-form"
+                  placeholder="Value"
+                  required
+                />
+              </div>
+
+              <!-- Input: Keperluan Pengajuan -->
+              <div class="grup-form" style="grid-column:1/-1;">
+                <label for="keperluan">Keperluan Pengajuan</label>
+                <input
+                  type="text"
+                  id="keperluan"
+                  class="input-form"
+                  placeholder="Value"
+                  required
+                />
+              </div>
+
+              <!-- Input: Upload KTP -->
+              <div class="grup-form">
+                <label>Upload KTP</label>
+                <div class="input-file-wrapper">
+                  <!-- Tombol pilih file -->
+                  <button
+                    type="button"
+                    class="btn-pilih-file"
+                    onclick="document.getElementById('fileKTP').click()"
+                  >Pilih File</button>
+                  <!-- Nama file yang dipilih -->
+                  <span id="namaFileKTP" class="input-file-teks">Tidak ada file dipilih</span>
+                  <!-- Input file tersembunyi -->
+                  <input
+                    type="file"
+                    id="fileKTP"
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    style="display:none"
+                    onchange="tampilkanNamaFile(this, 'namaFileKTP')"
+                  />
+                </div>
+              </div>
+
+              <!-- Input: Upload KK -->
+              <div class="grup-form">
+                <label>Upload KK</label>
+                <div class="input-file-wrapper">
+                  <button
+                    type="button"
+                    class="btn-pilih-file"
+                    onclick="document.getElementById('fileKK').click()"
+                  >Pilih File</button>
+                  <span id="namaFileKK" class="input-file-teks">Tidak ada file dipilih</span>
+                  <input
+                    type="file"
+                    id="fileKK"
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    style="display:none"
+                    onchange="tampilkanNamaFile(this, 'namaFileKK')"
+                  />
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Bagian 2: Data Usaha (khusus Surat Keterangan Usaha) -->
+          <div class="kartu-form">
+            <h3>Isi Data Usaha</h3>
+
+            <div class="grid-form-2">
+
+              <!-- Input: Nama Usaha -->
+              <div class="grup-form">
+                <label for="namaUsaha">Nama Usaha</label>
+                <input type="text" id="namaUsaha" class="input-form" placeholder="Value" required />
+              </div>
+
+              <!-- Input: Jenis Usaha -->
+              <div class="grup-form">
+                <label for="jenisUsaha">Jenis Usaha</label>
+                <input type="text" id="jenisUsaha" class="input-form" placeholder="Value" required />
+              </div>
+
+              <!-- Input: Lama Usaha Berdiri -->
+              <div class="grup-form">
+                <label for="lamaUsaha">Lama Usaha Berdiri</label>
+                <input type="text" id="lamaUsaha" class="input-form" placeholder="Value" required />
+              </div>
+
+              <!-- Input: Deskripsi Singkat Usaha -->
+              <div class="grup-form">
+                <label for="deskripsiUsaha">Deskripsi Singkat Usaha</label>
+                <input type="text" id="deskripsiUsaha" class="input-form" placeholder="Value" required />
+              </div>
+
+              <!-- Input: Upload Foto Tempat Usaha (opsional) -->
+              <div class="grup-form" style="grid-column:1/-1;">
+                <label>Upload Foto Tempat Usaha (opsional)</label>
+                <div class="input-file-wrapper">
+                  <button
+                    type="button"
+                    class="btn-pilih-file"
+                    onclick="document.getElementById('fotoUsaha').click()"
+                  >Pilih File</button>
+                  <span id="namaFotoUsaha" class="input-file-teks">Tidak ada file dipilih</span>
+                  <input
+                    type="file"
+                    id="fotoUsaha"
+                    accept=".jpg,.jpeg,.png"
+                    style="display:none"
+                    onchange="tampilkanNamaFile(this, 'namaFotoUsaha')"
+                  />
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Tombol aksi form: Kirim dan Reset -->
+          <div class="form-aksi">
+            <button type="submit" class="btn-primer">Ajukan Surat</button>
+            <button type="button" class="btn-sekunder" onclick="resetForm('formPengajuan')">Reset</button>
+          </div>
+
+        </form>
+
+      </main>
+    </div>
+
+  </div>
+
+  <script src="js/main.js"></script>
+</body>
+</html>
