@@ -1,15 +1,14 @@
 <?php
-session_start();
 require 'koneksi.php';
 
-// Lindungi halaman: Jika belum login atau bukan warga, tendang ke login
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'warga') {
+// Cek COOKIE, bukan SESSION
+if (!isset($_COOKIE['user_id']) || $_COOKIE['role'] != 'warga') {
     header("Location: login.php");
     exit;
 }
 
-$id_warga = $_SESSION['user_id'];
-$nama_warga = $_SESSION['nama'];
+$id_warga = $_COOKIE['user_id'];
+$nama_warga = $_COOKIE['nama'];
 
 // Ambil data statistik dari database
 $q_total = $conn->query("SELECT COUNT(*) as total FROM surat WHERE id_warga = $id_warga")->fetch_assoc()['total'];

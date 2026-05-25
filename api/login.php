@@ -1,5 +1,4 @@
 <?php
-session_start();
 require 'koneksi.php';
 
 $error = "";
@@ -15,12 +14,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if ($result->num_rows > 0) {
         $user = $result->fetch_assoc();
         
-        // Simpan sesi login
-        $_SESSION['user_id'] = $user['id'];
-        $_SESSION['nama'] = $user['nama'];
-        $_SESSION['role'] = $user['role'];
+        // GUNAKAN COOKIE (Aman untuk Vercel Serverless)
+        setcookie('user_id', $user['id'], time() + (86400 * 7), "/"); // Aktif 7 hari
+        setcookie('nama', $user['nama'], time() + (86400 * 7), "/");
+        setcookie('role', $user['role'], time() + (86400 * 7), "/");
 
-        // Arahkan ke dashboard sesuai role (jabatan)
+        // Arahkan ke dashboard sesuai role
         if ($user['role'] == 'kades') {
             header("Location: dashboard-kades.php");
         } else if ($user['role'] == 'petugas') {
