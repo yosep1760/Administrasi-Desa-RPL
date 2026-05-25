@@ -157,11 +157,11 @@ function initSidebar() {
     overlay.addEventListener('click', tutupSidebar);
   }
 
-  // Tandai link aktif berdasarkan halaman saat ini
+  // Tandai link aktif berdasarkan halaman saat ini (sudah disesuaikan ke .php)
   const urlSaatIni = window.location.pathname.split('/').pop();
   sidebar.querySelectorAll('.sidebar-link').forEach(function (link) {
     const href = link.getAttribute('href') || '';
-    if (href === urlSaatIni || (urlSaatIni === '' && href === 'dashboard.html')) {
+    if (href === urlSaatIni || (urlSaatIni === '' && href === 'dashboard.php')) {
       link.classList.add('aktif');
     }
   });
@@ -188,84 +188,8 @@ function initSidebar() {
 }
 
 // ============================================
-// VALIDASI FORM AUTENTIKASI
+// BANTUAN UI (HELPERS)
 // ============================================
-
-/**
- * Validasi form login
- * @param {Event} e - Event submit form
- */
-function validasiLogin(e) {
-  e.preventDefault();
-  const username = document.getElementById('loginUsername').value.trim();
-  const password = document.getElementById('loginPassword').value;
-  const pesanError = document.getElementById('pesanErrorLogin');
-
-  // Bersihkan pesan error sebelumnya
-  if (pesanError) pesanError.style.display = 'none';
-
-  // Validasi input kosong
-  if (!username || !password) {
-    tampilkanError(pesanError, 'Mohon isi username dan password!');
-    return false;
-  }
-
-  // Validasi panjang password minimal
-  if (password.length < 6) {
-    tampilkanError(pesanError, 'Password minimal 6 karakter!');
-    return false;
-  }
-
-  // Simulasi login berhasil - arahkan ke dashboard
-  tampilkanLoading(e.submitter);
-
-  setTimeout(function () {
-    // Simpan info user di session (simulasi)
-    sessionStorage.setItem('user', JSON.stringify({ nama: username, peran: 'Warga' }));
-    window.location.href = 'dashboard.html';
-  }, 800);
-}
-
-/**
- * Validasi form register
- * @param {Event} e - Event submit form
- */
-function validasiRegister(e) {
-  e.preventDefault();
-  const username = document.getElementById('regUsername').value.trim();
-  const email = document.getElementById('regEmail').value.trim();
-  const password = document.getElementById('regPassword').value;
-  const pesanError = document.getElementById('pesanErrorReg');
-
-  if (pesanError) pesanError.style.display = 'none';
-
-  // Validasi field kosong
-  if (!username || !email || !password) {
-    tampilkanError(pesanError, 'Semua field harus diisi!');
-    return false;
-  }
-
-  // Validasi format email
-  const reEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!reEmail.test(email)) {
-    tampilkanError(pesanError, 'Format email tidak valid!');
-    return false;
-  }
-
-  // Validasi panjang password
-  if (password.length < 6) {
-    tampilkanError(pesanError, 'Password minimal 6 karakter!');
-    return false;
-  }
-
-  // Simulasi register berhasil
-  tampilkanLoading(e.submitter);
-
-  setTimeout(function () {
-    alert('Registrasi berhasil! Silakan login.');
-    window.location.href = 'login.html';
-  }, 800);
-}
 
 // ---- Helper: Tampilkan pesan error ----
 function tampilkanError(elPesan, teks) {
@@ -289,45 +213,6 @@ function tampilkanLoading(tombol) {
     tombol.textContent = teksAsli;
     tombol.disabled = false;
   }, 3000);
-}
-
-// ============================================
-// VALIDASI FORM PENGAJUAN SURAT
-// ============================================
-
-/**
- * Validasi dan kirim form pengajuan surat
- * @param {Event} e - Event submit form
- */
-function kirimPengajuan(e) {
-  e.preventDefault();
-
-  // Kumpulkan semua input yang wajib diisi
-  const inputWajib = e.target.querySelectorAll('[required]');
-  let valid = true;
-
-  inputWajib.forEach(function (input) {
-    if (!input.value.trim()) {
-      // Tandai field yang kosong
-      input.style.borderColor = 'var(--warna-bahaya)';
-      valid = false;
-    } else {
-      input.style.borderColor = ''; // Reset border jika sudah diisi
-    }
-  });
-
-  if (!valid) {
-    alert('Mohon lengkapi semua field yang wajib diisi!');
-    return;
-  }
-
-  // Simulasi pengiriman berhasil
-  tampilkanLoading(e.submitter);
-
-  setTimeout(function () {
-    alert('Pengajuan surat berhasil dikirim! Anda akan diarahkan ke halaman riwayat.');
-    window.location.href = 'riwayat.html';
-  }, 1000);
 }
 
 // ============================================
@@ -420,16 +305,6 @@ function tampilkanNamaFile(input, idTampilan) {
     elTampilan.textContent = input.files[0].name;
   } else {
     elTampilan.textContent = 'Tidak ada file dipilih';
-  }
-}
-
-/**
- * Logout pengguna dan hapus sesi
- */
-function logout() {
-  if (confirm('Apakah Anda yakin ingin keluar?')) {
-    sessionStorage.removeItem('user');
-    window.location.href = 'login.html';
   }
 }
 
