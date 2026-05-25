@@ -1,37 +1,39 @@
+<?php
+session_start();
+?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Tentang Kami - NamaWeb</title>
-  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="../css/style.css" />
 </head>
 <body>
 
-  <!-- ============================================
-       HALAMAN TENTANG KAMI
-       ============================================ -->
-
-  <!-- Navbar sama seperti halaman publik lainnya -->
   <header id="navbar" class="navbar">
-    <a href="index.html" class="navbar-logo">NamaWeb</a>
+    <a href="index.php" class="navbar-logo">NamaWeb</a>
     <ul id="menuNavbar" class="navbar-menu">
-      <li><a href="index.html">Home</a></li>
-      <li><a href="tentang.html">Tentang</a></li>
-      <li><a href="index.html#surat">Surat</a></li>
-      <li><a href="index.html#alur">Alur</a></li>
-      <li><a href="index.html#faq">FaQ</a></li>
-      <li><a href="kontak.html">Kontak</a></li>
+      <li><a href="index.php">Home</a></li>
+      <li><a href="tentang.php">Tentang</a></li>
+      <li><a href="index.php#surat">Surat</a></li>
+      <li><a href="index.php#alur">Alur</a></li>
+      <li><a href="index.php#faq">FaQ</a></li>
+      <li><a href="kontak.php">Kontak</a></li>
     </ul>
+    
     <div class="navbar-aksi">
-      <a href="login.html" class="btn-primer">Login</a>
+      <?php if(isset($_SESSION['user_id'])): ?>
+          <a href="dashboard.php" class="btn-primer">Dashboard</a>
+      <?php else: ?>
+          <a href="login.php" class="btn-primer">Login</a>
+      <?php endif; ?>
       <button id="tombolHamburger" class="tombol-hamburger" aria-label="Buka menu">
         <span></span><span></span><span></span>
       </button>
     </div>
   </header>
 
-  <!-- Hero section halaman tentang -->
   <section class="hero-tentang padding-halaman">
     <h1>Tentang NamaWeb</h1>
     <p>
@@ -40,14 +42,11 @@
     </p>
   </section>
 
-  <!-- Konten tentang: Visi, Misi, dan Tim -->
   <section style="padding:5rem 2rem;background:var(--warna-bg);">
     <div class="kontainer">
 
-      <!-- Visi dan Misi -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:3rem;margin-bottom:4rem;">
 
-        <!-- Visi -->
         <div style="background:var(--warna-bg-kartu);border:1px solid var(--warna-border);border-radius:var(--radius-sedang);padding:2rem;">
           <div style="font-size:2.5rem;margin-bottom:1rem;">🎯</div>
           <h2 style="font-family:var(--font-judul);font-size:1.4rem;font-weight:700;margin-bottom:1rem;">
@@ -59,7 +58,6 @@
           </p>
         </div>
 
-        <!-- Misi -->
         <div style="background:var(--warna-primer);border-radius:var(--radius-sedang);padding:2rem;">
           <div style="font-size:2.5rem;margin-bottom:1rem;">🚀</div>
           <h2 style="font-family:var(--font-judul);font-size:1.4rem;font-weight:700;margin-bottom:1rem;color:white;">
@@ -75,30 +73,25 @@
 
       </div>
 
-      <!-- Tim atau kelompok -->
       <div class="judul-seksi">
         <h2>Tim Pengembang</h2>
         <p>Dikembangkan dengan penuh semangat untuk kemajuan layanan administrasi desa</p>
       </div>
 
-      <!-- Grid kartu tim -->
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;">
 
-        <!-- Anggota tim 1 -->
         <div style="background:var(--warna-bg-kartu);border:1px solid var(--warna-border);border-radius:var(--radius-sedang);padding:1.5rem;text-align:center;">
           <div style="width:70px;height:70px;background:var(--warna-primer);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:1.8rem;margin:0 auto 1rem;">👤</div>
           <h3 style="font-weight:700;font-size:1rem;margin-bottom:0.25rem;">Anggota Satu</h3>
           <p style="color:var(--warna-teks-muda);font-size:0.825rem;">Frontend Developer</p>
         </div>
 
-        <!-- Anggota tim 2 -->
         <div style="background:var(--warna-bg-kartu);border:1px solid var(--warna-border);border-radius:var(--radius-sedang);padding:1.5rem;text-align:center;">
           <div style="width:70px;height:70px;background:var(--warna-aksen);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--warna-primer);font-size:1.8rem;margin:0 auto 1rem;">👤</div>
           <h3 style="font-weight:700;font-size:1rem;margin-bottom:0.25rem;">Anggota Dua</h3>
           <p style="color:var(--warna-teks-muda);font-size:0.825rem;">Backend Developer</p>
         </div>
 
-        <!-- Anggota tim 3 -->
         <div style="background:var(--warna-bg-kartu);border:1px solid var(--warna-border);border-radius:var(--radius-sedang);padding:1.5rem;text-align:center;">
           <div style="width:70px;height:70px;background:var(--warna-primer);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:1.8rem;margin:0 auto 1rem;">👤</div>
           <h3 style="font-weight:700;font-size:1rem;margin-bottom:0.25rem;">Anggota Tiga</h3>
@@ -110,7 +103,6 @@
     </div>
   </section>
 
-  <!-- Footer -->
   <footer>
     <div class="footer-grid">
       <div>
@@ -121,12 +113,12 @@
       <div>
         <div class="footer-judul-kolom">Navigasi</div>
         <ul class="footer-link">
-          <li><a href="index.html">Beranda</a></li>
-          <li><a href="tentang.html">Tentang Kami</a></li>
-          <li><a href="index.html#surat">Jenis Surat</a></li>
-          <li><a href="index.html#alur">Alur Pengajuan</a></li>
-          <li><a href="index.html#faq">FaQ</a></li>
-          <li><a href="kontak.html">Hubungi Kami</a></li>
+          <li><a href="index.php">Beranda</a></li>
+          <li><a href="tentang.php">Tentang Kami</a></li>
+          <li><a href="index.php#surat">Jenis Surat</a></li>
+          <li><a href="index.php#alur">Alur Pengajuan</a></li>
+          <li><a href="index.php#faq">FaQ</a></li>
+          <li><a href="kontak.php">Hubungi Kami</a></li>
         </ul>
       </div>
       <div>
@@ -145,6 +137,6 @@
     </div>
   </footer>
 
-  <script src="js/main.js"></script>
+  <script src="../js/main.js"></script>
 </body>
 </html>

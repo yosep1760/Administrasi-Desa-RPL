@@ -1,69 +1,55 @@
-<!-- ============================================
-     KOMPONEN SIDEBAR DASHBOARD (Template Reusable)
-     File: sidebar-template.html
-     Catatan: Salin bagian <aside> ini ke setiap halaman dashboard
-     ============================================ -->
-
-<!-- Overlay gelap saat sidebar terbuka di mobile -->
 <div id="overlaySidebar" class="overlay-sidebar"></div>
 
-<!-- SIDEBAR NAVIGASI -->
 <aside id="sidebar" class="sidebar">
 
-  <!-- Header sidebar: Logo -->
   <div class="sidebar-header">
     *Logo + NamaWeb
   </div>
 
-  <!-- Input pencarian di sidebar -->
   <div class="sidebar-cari">
     <input type="search" class="input-cari" placeholder="Search" aria-label="Cari menu" />
   </div>
 
-  <!-- Navigasi sidebar -->
   <nav class="sidebar-nav">
 
-    <!-- Link Dashboard Utama -->
-    <a href="dashboard.html" class="sidebar-link">
+    <a href="dashboard.php" class="sidebar-link">
       <span class="sidebar-link-ikon">📊</span>
       Dashboard
     </a>
 
-    <!-- Grup: Ajukan Surat -->
     <div class="sidebar-label">
       Ajukan Surat
       <span class="sidebar-label-ikon">∧</span>
     </div>
     <div class="sidebar-sub">
-      <a href="pengajuan.html?jenis=nikah" class="sidebar-link">
+      <a href="pengajuan.php?jenis=nikah" class="sidebar-link">
         <span class="sidebar-link-ikon">✉</span>
         Surat Pengantar Nikah
       </a>
-      <a href="pengajuan.html?jenis=usaha" class="sidebar-link aktif">
+      <a href="pengajuan.php?jenis=usaha" class="sidebar-link">
         <span class="sidebar-link-ikon">✉</span>
         Surat Keterangan Usaha
       </a>
-      <a href="pengajuan.html?jenis=domisili" class="sidebar-link">
+      <a href="pengajuan.php?jenis=domisili" class="sidebar-link">
         <span class="sidebar-link-ikon">✉</span>
         Surat Keterangan Domisili
       </a>
-      <a href="pengajuan.html?jenis=lainnya" class="sidebar-link">
+      <a href="pengajuan.php?jenis=lainnya" class="sidebar-link">
         <span class="sidebar-link-ikon">✉</span>
         Surat lorem ipsum
       </a>
     </div>
 
-    <!-- Grup: Informasi -->
     <div class="sidebar-label">
       Informasi
       <span class="sidebar-label-ikon">∧</span>
     </div>
     <div class="sidebar-sub">
-      <a href="riwayat.html" class="sidebar-link">
+      <a href="riwayat.php" class="sidebar-link">
         <span class="sidebar-link-ikon">🕐</span>
         Riwayat Pengajuan
       </a>
-      <a href="profil.html" class="sidebar-link">
+      <a href="profil.php" class="sidebar-link">
         <span class="sidebar-link-ikon">👤</span>
         Profil Saya
       </a>

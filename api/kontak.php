@@ -1,55 +1,54 @@
+<?php
+session_start();
+?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Kontak - NamaWeb</title>
-  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="../css/style.css" />
 </head>
 <body>
 
-  <!-- ============================================
-       HALAMAN KONTAK
-       ============================================ -->
-
-  <!-- Navbar -->
   <header id="navbar" class="navbar">
-    <a href="index.html" class="navbar-logo">NamaWeb</a>
+    <a href="index.php" class="navbar-logo">NamaWeb</a>
     <ul id="menuNavbar" class="navbar-menu">
-      <li><a href="index.html">Home</a></li>
-      <li><a href="tentang.html">Tentang</a></li>
-      <li><a href="index.html#surat">Surat</a></li>
-      <li><a href="index.html#alur">Alur</a></li>
-      <li><a href="index.html#faq">FaQ</a></li>
-      <li><a href="kontak.html">Kontak</a></li>
+      <li><a href="index.php">Home</a></li>
+      <li><a href="tentang.php">Tentang</a></li>
+      <li><a href="index.php#surat">Surat</a></li>
+      <li><a href="index.php#alur">Alur</a></li>
+      <li><a href="index.php#faq">FaQ</a></li>
+      <li><a href="kontak.php">Kontak</a></li>
     </ul>
     <div class="navbar-aksi">
-      <a href="login.html" class="btn-primer">Login</a>
+      <?php if(isset($_SESSION['user_id'])): ?>
+          <a href="dashboard.php" class="btn-primer">Dashboard</a>
+      <?php else: ?>
+          <a href="login.php" class="btn-primer">Login</a>
+      <?php endif; ?>
+      
       <button id="tombolHamburger" class="tombol-hamburger" aria-label="Buka menu">
         <span></span><span></span><span></span>
       </button>
     </div>
   </header>
 
-  <!-- Hero kontak -->
   <section class="hero-tentang padding-halaman">
     <h1>Hubungi Kami</h1>
     <p>Kami siap membantu Anda. Silakan hubungi kami melalui berbagai saluran yang tersedia.</p>
   </section>
 
-  <!-- Konten kontak -->
   <section style="padding:5rem 2rem;background:var(--warna-bg);">
     <div class="kontainer">
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:3rem;align-items:start;">
 
-        <!-- KIRI: Informasi kontak -->
         <div>
           <h2 style="font-family:var(--font-judul);font-size:1.8rem;font-weight:700;margin-bottom:1.5rem;">
             Informasi Kontak
           </h2>
 
-          <!-- Kartu WhatsApp -->
           <div style="background:var(--warna-bg-kartu);border:1px solid var(--warna-border);border-radius:var(--radius-sedang);padding:1.25rem;margin-bottom:1rem;display:flex;gap:1rem;align-items:flex-start;">
             <div style="font-size:1.5rem;">💬</div>
             <div>
@@ -59,7 +58,6 @@
             </div>
           </div>
 
-          <!-- Kartu Email -->
           <div style="background:var(--warna-bg-kartu);border:1px solid var(--warna-border);border-radius:var(--radius-sedang);padding:1.25rem;margin-bottom:1rem;display:flex;gap:1rem;align-items:flex-start;">
             <div style="font-size:1.5rem;">✉️</div>
             <div>
@@ -69,7 +67,6 @@
             </div>
           </div>
 
-          <!-- Kartu Alamat Kantor -->
           <div style="background:var(--warna-bg-kartu);border:1px solid var(--warna-border);border-radius:var(--radius-sedang);padding:1.25rem;display:flex;gap:1rem;align-items:flex-start;">
             <div style="font-size:1.5rem;">📍</div>
             <div>
@@ -80,16 +77,13 @@
           </div>
         </div>
 
-        <!-- KANAN: Form pesan -->
         <div style="background:var(--warna-bg-kartu);border:1px solid var(--warna-border);border-radius:var(--radius-sedang);padding:2rem;">
           <h2 style="font-family:var(--font-judul);font-size:1.4rem;font-weight:700;margin-bottom:1.5rem;">
             Kirim Pesan
           </h2>
 
-          <!-- Form kontak -->
           <form onsubmit="kirimPesan(event)">
 
-            <!-- Input nama -->
             <div class="grup-form" style="margin-bottom:1rem;">
               <label for="konNama" style="display:block;font-size:0.825rem;font-weight:600;margin-bottom:0.35rem;">
                 Nama Lengkap
@@ -97,7 +91,6 @@
               <input type="text" id="konNama" class="input-form" placeholder="Nama Anda" required />
             </div>
 
-            <!-- Input email -->
             <div class="grup-form" style="margin-bottom:1rem;">
               <label for="konEmail" style="display:block;font-size:0.825rem;font-weight:600;margin-bottom:0.35rem;">
                 Email
@@ -105,7 +98,6 @@
               <input type="email" id="konEmail" class="input-form" placeholder="email@contoh.com" required />
             </div>
 
-            <!-- Input subjek -->
             <div class="grup-form" style="margin-bottom:1rem;">
               <label for="konSubjek" style="display:block;font-size:0.825rem;font-weight:600;margin-bottom:0.35rem;">
                 Subjek
@@ -113,7 +105,6 @@
               <input type="text" id="konSubjek" class="input-form" placeholder="Perihal pesan Anda" required />
             </div>
 
-            <!-- Textarea pesan -->
             <div class="grup-form" style="margin-bottom:1.25rem;">
               <label for="konPesan" style="display:block;font-size:0.825rem;font-weight:600;margin-bottom:0.35rem;">
                 Pesan
@@ -128,7 +119,6 @@
               ></textarea>
             </div>
 
-            <!-- Tombol kirim -->
             <button type="submit" class="btn-primer" style="width:100%;">Kirim Pesan</button>
 
           </form>
@@ -138,7 +128,6 @@
     </div>
   </section>
 
-  <!-- Footer -->
   <footer>
     <div class="footer-grid">
       <div>
@@ -149,12 +138,12 @@
       <div>
         <div class="footer-judul-kolom">Navigasi</div>
         <ul class="footer-link">
-          <li><a href="index.html">Beranda</a></li>
-          <li><a href="tentang.html">Tentang Kami</a></li>
-          <li><a href="index.html#surat">Jenis Surat</a></li>
-          <li><a href="index.html#alur">Alur Pengajuan</a></li>
-          <li><a href="index.html#faq">FaQ</a></li>
-          <li><a href="kontak.html">Hubungi Kami</a></li>
+          <li><a href="index.php">Beranda</a></li>
+          <li><a href="tentang.php">Tentang Kami</a></li>
+          <li><a href="index.php#surat">Jenis Surat</a></li>
+          <li><a href="index.php#alur">Alur Pengajuan</a></li>
+          <li><a href="index.php#faq">FaQ</a></li>
+          <li><a href="kontak.php">Hubungi Kami</a></li>
         </ul>
       </div>
       <div>
@@ -173,12 +162,17 @@
     </div>
   </footer>
 
-  <script src="js/main.js"></script>
+  <script src="../js/main.js"></script>
   <script>
-    // Fungsi kirim pesan form kontak (simulasi)
+    // Fungsi kirim pesan form kontak (simulasi JS bawaanmu dipertahankan)
     function kirimPesan(e) {
       e.preventDefault();
-      tampilkanLoading(e.submitter);
+      
+      // Jika kamu menggunakan fungsi tampilkanLoading di main.js
+      if (typeof tampilkanLoading === "function") {
+          tampilkanLoading(e.submitter);
+      }
+      
       setTimeout(function () {
         alert('Pesan Anda berhasil dikirim! Kami akan menghubungi Anda segera.');
         e.target.reset();
