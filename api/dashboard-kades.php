@@ -1,14 +1,13 @@
 <?php
-session_start();
 require 'koneksi.php';
 
-// Lindungi halaman: Pastikan yang login HANYA KADES
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'kades') {
+// Lindungi halaman: Pastikan yang login HANYA KADES (Gunakan COOKIE)
+if (!isset($_COOKIE['user_id']) || $_COOKIE['role'] != 'kades') {
     header("Location: login.php");
     exit;
 }
 
-$nama_kades = $_SESSION['nama'];
+$nama_kades = $_COOKIE['nama'];
 
 // Logika Kades untuk menyetujui surat
 if (isset($_GET['approve_id'])) {

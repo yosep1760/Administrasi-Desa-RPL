@@ -1,15 +1,14 @@
 <?php
-session_start();
 require 'koneksi.php';
 
-// Lindungi halaman
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'warga') {
+// Lindungi halaman dengan COOKIE
+if (!isset($_COOKIE['user_id']) || $_COOKIE['role'] != 'warga') {
     header("Location: login.php");
     exit;
 }
 
-$id_warga = $_SESSION['user_id'];
-$nama_warga = $_SESSION['nama'];
+$id_warga = $_COOKIE['user_id'];
+$nama_warga = $_COOKIE['nama'];
 
 // Ambil semua data riwayat surat milik warga yang sedang login
 $query_riwayat = $conn->query("SELECT * FROM surat WHERE id_warga = $id_warga ORDER BY id DESC");

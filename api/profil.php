@@ -1,14 +1,13 @@
 <?php
-session_start();
 require 'koneksi.php';
 
-// Lindungi halaman
-if (!isset($_SESSION['user_id'])) {
+// Lindungi halaman dengan COOKIE
+if (!isset($_COOKIE['user_id'])) {
     header("Location: login.php");
     exit;
 }
 
-$id_user = $_SESSION['user_id'];
+$id_user = $_COOKIE['user_id'];
 
 // Ambil data user secara lengkap dari database
 $query = $conn->query("SELECT * FROM pengguna WHERE id = $id_user");

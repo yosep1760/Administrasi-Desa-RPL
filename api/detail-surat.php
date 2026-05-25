@@ -1,15 +1,15 @@
 <?php
-session_start();
 require 'koneksi.php';
 
-// Lindungi halaman
-if (!isset($_SESSION['user_id'])) {
+// Lindungi halaman (Gunakan COOKIE)
+if (!isset($_COOKIE['user_id'])) {
     header("Location: login.php");
     exit;
 }
 
-$id_user = $_SESSION['user_id'];
-$nama_user = $_SESSION['nama'];
+$id_user = $_COOKIE['user_id'];
+$nama_user = $_COOKIE['nama'];
+$role_user = $_COOKIE['role']; // Ambil role dari cookie
 
 // Cek apakah ada ID surat di URL
 if (!isset($_GET['id'])) {
@@ -33,7 +33,7 @@ if ($query->num_rows == 0) {
 $data = $query->fetch_assoc();
 
 // Keamanan Tambahan: Pastikan Warga HANYA bisa melihat surat miliknya sendiri
-if ($_SESSION['role'] == 'warga' && $data['id_warga'] != $id_user) {
+if ($role_user == 'warga' && $data['id_warga'] != $id_user) {
     echo "<script>alert('Akses Ditolak! Ini bukan surat Anda.'); window.location.href='riwayat.php';</script>";
     exit;
 }

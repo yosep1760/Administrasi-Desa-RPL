@@ -1,14 +1,13 @@
 <?php
-session_start();
 require 'koneksi.php';
 
-// Lindungi halaman: Pastikan yang login HANYA PETUGAS
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'petugas') {
+// Lindungi halaman: Pastikan yang login HANYA PETUGAS (Gunakan COOKIE)
+if (!isset($_COOKIE['user_id']) || $_COOKIE['role'] != 'petugas') {
     header("Location: login.php");
     exit;
 }
 
-$nama_petugas = $_SESSION['nama'];
+$nama_petugas = $_COOKIE['nama'];
 
 // Logika untuk mengubah status surat
 if (isset($_GET['update_id']) && isset($_GET['status'])) {
