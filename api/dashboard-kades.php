@@ -61,9 +61,9 @@ $data_surat = $conn->query($query);
         </div>
         <div class="sidebar-label">Layanan <span class="sidebar-label-ikon">∧</span></div>
         <div class="sidebar-sub">
-          <a href="#" class="sidebar-link"><span class="sidebar-link-ikon">📩</span>Request Surat</a>
-          <a href="#" class="sidebar-link"><span class="sidebar-link-ikon">✅</span>Surat Disetujui</a>
-          <a href="#" class="sidebar-link"><span class="sidebar-link-ikon">❌</span>Surat Ditolak</a>
+          <a href="kades-request.php" class="sidebar-link"><span class="sidebar-link-ikon">📩</span>Request Surat</a>
+          <a href="kades-disetujui.php" class="sidebar-link"><span class="sidebar-link-ikon">✅</span>Surat Disetujui</a>
+          <a href="kades-ditolak.php" class="sidebar-link"><span class="sidebar-link-ikon">❌</span>Surat Ditolak</a>
         </div>
       </nav>
     </aside>
