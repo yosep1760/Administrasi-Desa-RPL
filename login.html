@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login - NamaWeb</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- ============================================
+       HALAMAN LOGIN
+       Tampilan dua panel: form login (kiri) + sambutan (kanan)
+       ============================================ -->
+  <div class="halaman-auth">
+
+    <!-- Dekorasi sudut halaman auth -->
+    <div class="auth-dekorasi-1"></div>
+    <div class="auth-dekorasi-2"></div>
+
+    <!-- Kartu utama login -->
+    <div class="kartu-auth">
+
+      <!-- PANEL KIRI: Form login -->
+      <div class="auth-form-panel">
+        <h2>Login</h2>
+
+        <!-- Pesan error validasi (tersembunyi secara default) -->
+        <div id="pesanErrorLogin" class="alert alert-bahaya" style="display:none;"></div>
+
+        <!-- Form login -->
+        <form onsubmit="validasiLogin(event)">
+
+          <!-- Input Username -->
+          <div class="grup-input">
+            <label for="loginUsername">Username</label>
+            <input
+              type="text"
+              id="loginUsername"
+              class="input-teks"
+              placeholder="Masukkan username Anda"
+              required
+              autocomplete="username"
+            />
+          </div>
+
+          <!-- Input Password -->
+          <div class="grup-input">
+            <label for="loginPassword">Password</label>
+            <input
+              type="password"
+              id="loginPassword"
+              class="input-teks"
+              placeholder="Masukkan password Anda"
+              required
+              autocomplete="current-password"
+            />
+          </div>
+
+          <!-- Tombol submit login -->
+          <div style="margin-top:1.25rem;">
+            <button type="submit" class="btn-primer" style="width:100%;">Login</button>
+          </div>
+
+        </form>
+
+        <!-- Link ke halaman register -->
+        <div class="auth-link">
+          Belum punya akun? <a href="register.html">Sign Up</a>
+        </div>
+
+        <!-- Link kembali ke beranda -->
+        <div class="auth-link" style="margin-top:0.5rem;">
+          <a href="index.html" style="color:var(--warna-teks-muda);">← Kembali ke Beranda</a>
+        </div>
+      </div>
+
+      <!-- PANEL KANAN: Pesan sambutan -->
+      <div class="auth-sambutan-panel">
+        <h3>Welcome!</h3>
+        <p>
+          We are happy to have you with us again.
+          If you need anything, we are here to help.
+        </p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Load JavaScript utama -->
+  <script src="js/main.js"></script>
+</body>
+</html>
