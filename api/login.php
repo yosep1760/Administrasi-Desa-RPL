@@ -96,7 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         </div>
         
         <div class="auth-link" style="margin-top:0.5rem;">
-          <a href="../index.html" style="color:var(--warna-teks-muda);">← Kembali ke Beranda</a>
+          <a href="../index.php" style="color:var(--warna-teks-muda);">← Kembali ke Beranda</a>
         </div>
       </div>
 
