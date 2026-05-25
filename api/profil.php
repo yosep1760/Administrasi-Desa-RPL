@@ -34,34 +34,52 @@ $huruf_awal = strtoupper(substr($user['nama'], 0, 1));
       <div class="sidebar-cari">
         <input type="search" class="input-cari" placeholder="Search" />
       </div>
+      
       <nav class="sidebar-nav">
-        <a href="dashboard.php" class="sidebar-link">
-          <span class="sidebar-link-ikon">📊</span>Dashboard
-        </a>
-        <div class="sidebar-label">Ajukan Surat <span class="sidebar-label-ikon">∧</span></div>
-        <div class="sidebar-sub">
-          <a href="pengajuan.php?jenis=nikah" class="sidebar-link">
-            <span class="sidebar-link-ikon">✉</span>Surat Pengantar Nikah
-          </a>
-          <a href="pengajuan.php?jenis=usaha" class="sidebar-link">
-            <span class="sidebar-link-ikon">✉</span>Surat Keterangan Usaha
-          </a>
-          <a href="pengajuan.php?jenis=domisili" class="sidebar-link">
-            <span class="sidebar-link-ikon">✉</span>Surat Keterangan Domisili
-          </a>
-          <a href="pengajuan.php?jenis=lainnya" class="sidebar-link">
-            <span class="sidebar-link-ikon">✉</span>Surat lorem ipsum
-          </a>
-        </div>
-        <div class="sidebar-label">Informasi <span class="sidebar-label-ikon">∧</span></div>
-        <div class="sidebar-sub">
-          <a href="riwayat.php" class="sidebar-link">
-            <span class="sidebar-link-ikon">🕐</span>Riwayat Pengajuan
-          </a>
-          <a href="profil.php" class="sidebar-link aktif">
-            <span class="sidebar-link-ikon">👤</span>Profil Saya
-          </a>
-        </div>
+        
+        <?php if ($user['role'] == 'warga'): ?>
+            <a href="dashboard.php" class="sidebar-link">
+              <span class="sidebar-link-ikon">📊</span>Dashboard
+            </a>
+            <div class="sidebar-label">Ajukan Surat <span class="sidebar-label-ikon">∧</span></div>
+            <div class="sidebar-sub">
+              <a href="pengajuan.php?jenis=nikah" class="sidebar-link"><span class="sidebar-link-ikon">✉</span>Surat Pengantar Nikah</a>
+              <a href="pengajuan.php?jenis=usaha" class="sidebar-link"><span class="sidebar-link-ikon">✉</span>Surat Keterangan Usaha</a>
+              <a href="pengajuan.php?jenis=domisili" class="sidebar-link"><span class="sidebar-link-ikon">✉</span>Surat Keterangan Domisili</a>
+              <a href="pengajuan.php?jenis=lainnya" class="sidebar-link"><span class="sidebar-link-ikon">✉</span>Surat lorem ipsum</a>
+            </div>
+            <div class="sidebar-label">Informasi <span class="sidebar-label-ikon">∧</span></div>
+            <div class="sidebar-sub">
+              <a href="riwayat.php" class="sidebar-link"><span class="sidebar-link-ikon">🕐</span>Riwayat Pengajuan</a>
+              <a href="profil.php" class="sidebar-link aktif"><span class="sidebar-link-ikon">👤</span>Profil Saya</a>
+            </div>
+
+        <?php elseif ($user['role'] == 'petugas'): ?>
+            <a href="dashboard-petugas.php" class="sidebar-link">
+              <span class="sidebar-link-ikon">🏠</span>Dashboard Petugas
+            </a>
+            <div class="sidebar-label">Pengaturan <span class="sidebar-label-ikon">∧</span></div>
+            <div class="sidebar-sub">
+              <a href="profil.php" class="sidebar-link aktif"><span class="sidebar-link-ikon">👤</span>Profil Saya</a>
+            </div>
+
+        <?php elseif ($user['role'] == 'kades'): ?>
+            <div class="sidebar-label">Dashboard <span class="sidebar-label-ikon">∧</span></div>
+            <div class="sidebar-sub">
+              <a href="dashboard-kades.php" class="sidebar-link"><span class="sidebar-link-ikon">🏠</span>Home</a>
+            </div>
+            <div class="sidebar-label">Layanan <span class="sidebar-label-ikon">∧</span></div>
+            <div class="sidebar-sub">
+              <a href="#" class="sidebar-link"><span class="sidebar-link-ikon">📩</span>Request Surat</a>
+              <a href="#" class="sidebar-link"><span class="sidebar-link-ikon">✅</span>Surat Disetujui</a>
+              <a href="#" class="sidebar-link"><span class="sidebar-link-ikon">❌</span>Surat Ditolak</a>
+            </div>
+            <div class="sidebar-label">Pengaturan <span class="sidebar-label-ikon">∧</span></div>
+            <div class="sidebar-sub">
+              <a href="profil.php" class="sidebar-link aktif"><span class="sidebar-link-ikon">👤</span>Profil Saya</a>
+            </div>
+        <?php endif; ?>
+
       </nav>
     </aside>
 
@@ -99,7 +117,7 @@ $huruf_awal = strtoupper(substr($user['nama'], 0, 1));
           </div>
 
           <h3 style="font-size:0.95rem;font-weight:700;margin-bottom:1rem;color:var(--warna-teks);">
-            Informasi Akun & Warga
+            Informasi Akun
           </h3>
 
           <table class="tabel-profil" id="tabelProfil">
@@ -133,7 +151,6 @@ $huruf_awal = strtoupper(substr($user['nama'], 0, 1));
 
   <script src="../js/main.js"></script>
   <script>
-    // Ambil password asli dari PHP untuk fitur toggle lihat password
     var passwordAsli = '<?= addslashes($user['password']) ?>';
     var passwordTersembunyi = true;
 
