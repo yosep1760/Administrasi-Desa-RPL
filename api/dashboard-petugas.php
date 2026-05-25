@@ -28,7 +28,7 @@ $c_diproses = $conn->query("SELECT COUNT(*) as c FROM surat WHERE status='Dipros
 $c_selesai = $conn->query("SELECT COUNT(*) as c FROM surat WHERE status='Selesai'")->fetch_assoc()['c'];
 
 // Ambil SEMUA data surat dari database dan gabungkan dengan nama warga
-$query = "SELECT surat.*, pengguna.nama AS nama_warga, pengguna.nik AS nik_warga 
+$query = "SELECT surat.*, pengguna.nama AS nama_warga 
           FROM surat 
           JOIN pengguna ON surat.id_warga = pengguna.id 
           ORDER BY surat.id DESC";
