@@ -84,6 +84,30 @@
 
         <!-- Form pengajuan surat -->
         <form id="formPengajuan" onsubmit="kirimPengajuan(event)">
+          <script>
+    function kirimPengajuan(event) {
+        event.preventDefault(); // Mencegah halaman reload
+        
+        let dataLama = JSON.parse(localStorage.getItem('dataPengajuanDesa')) || [];
+        
+        // Penyesuaian ID sesuai dengan form HTML kamu
+        let pengajuanBaru = {
+            id: Date.now(), 
+            tanggal: new Date().toLocaleDateString('id-ID'),
+            nik: document.getElementById('nik').value,
+            nama: document.getElementById('namaLengkap').value, // ID disesuaikan
+            jenis: 'Surat Keterangan Usaha', // Karena ini form SKU
+            keterangan: document.getElementById('keperluan').value, // ID disesuaikan
+            status: 'Menunggu'
+        };
+        
+        dataLama.push(pengajuanBaru);
+        localStorage.setItem('dataPengajuanDesa', JSON.stringify(dataLama));
+        
+        alert('Pengajuan berhasil dikirim ke Petugas Desa!');
+        window.location.href = 'dashboard.html'; 
+    }
+</script>
 
           <!-- Bagian 1: Isi Data Diri -->
           <div class="kartu-form">

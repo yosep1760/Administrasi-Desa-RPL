@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Petugas Desa</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-light">
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="#">AdminDesa</a>
+            <div class="d-flex text-white align-items-center">
+                <span class="me-3 d-none d-md-block"><i class="fa-solid fa-user-shield me-1"></i> Halo, Petugas</span>
+                <a href="login.html" class="btn btn-danger btn-sm"><i class="fa-solid fa-sign-out-alt"></i> Keluar</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <nav class="col-md-2 d-none d-md-block bg-white sidebar shadow-sm min-vh-100 p-3">
+                <ul class="nav flex-column">
+                    <li class="nav-item mb-2">
+                        <a class="nav-link active fw-bold text-primary bg-light rounded" href="dashboard-petugas.html">
+                            <i class="fa-solid fa-home me-2"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link text-secondary" href="#">
+                            <i class="fa-solid fa-users me-2"></i> Data Warga
+                        </a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link text-secondary" href="#">
+                            <i class="fa-solid fa-file-signature me-2"></i> Arsip Surat
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+
+            <main class="col-md-10 ms-sm-auto px-md-4 py-4">
+                <h3 class="mb-4 fw-bold text-dark">Kelola Pengajuan Surat</h3>
+
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="card text-white bg-secondary mb-3 shadow-sm border-0">
+                            <div class="card-body">
+                                <h6 class="card-title"><i class="fa-solid fa-inbox"></i> Menunggu Diproses</h6>
+                                <h2 class="card-text fw-bold" id="count-menunggu">0</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card text-dark bg-warning mb-3 shadow-sm border-0">
+                            <div class="card-body">
+                                <h6 class="card-title"><i class="fa-solid fa-spinner"></i> Sedang Diproses</h6>
+                                <h2 class="card-text fw-bold" id="count-diproses">0</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card text-white bg-success mb-3 shadow-sm border-0">
+                            <div class="card-body">
+                                <h6 class="card-title"><i class="fa-solid fa-check-circle"></i> Selesai</h6>
+                                <h2 class="card-text fw-bold" id="count-selesai">0</h2>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white fw-bold text-primary py-3">
+                        <i class="fa-solid fa-table me-1"></i> Daftar Antrean Pengajuan Warga
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light text-secondary">
+                                    <tr>
+                                        <th class="ps-4">No</th>
+                                        <th>Tanggal</th>
+                                        <th>NIK / Nama</th>
+                                        <th>Jenis Surat</th>
+                                        <th>Keterangan</th>
+                                        <th>Status</th>
+                                        <th class="text-center">Aksi Petugas</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabel-petugas">
+                                    </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            tampilkanData();
+        });
+
+        function tampilkanData() {
+            const tabel = document.getElementById('tabel-petugas');
+            let dataPengajuan = JSON.parse(localStorage.getItem('dataPengajuanDesa')) || [];
+            
+            // Hitung statistik
+            document.getElementById('count-menunggu').innerText = dataPengajuan.filter(d => d.status === 'Menunggu').length;
+            document.getElementById('count-diproses').innerText = dataPengajuan.filter(d => d.status === 'Diproses').length;
+            document.getElementById('count-selesai').innerText = dataPengajuan.filter(d => d.status === 'Selesai').length;
+
+            tabel.innerHTML = '';
+
+            if(dataPengajuan.length === 0) {
+                tabel.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">Belum ada pengajuan masuk.</td></tr>';
+                return;
+            }
+
+            dataPengajuan.forEach((data, index) => {
+                // Warna badge status
+                let badgeClass = 'bg-secondary';
+                if(data.status === 'Diproses') badgeClass = 'bg-warning text-dark';
+                if(data.status === 'Selesai') badgeClass = 'bg-success';
+                if(data.status === 'Ditolak') badgeClass = 'bg-danger';
+
+                tabel.innerHTML += `
+                    <tr>
+                        <td class="ps-4">${index + 1}</td>
+                        <td>${data.tanggal}</td>
+                        <td>
+                            <strong>${data.nama}</strong><br>
+                            <small class="text-muted">${data.nik}</small>
+                        </td>
+                        <td>${data.jenis}</td>
+                        <td>${data.keterangan}</td>
+                        <td><span class="badge ${badgeClass}">${data.status}</span></td>
+                        <td class="text-center">
+                            <button onclick="ubahStatus(${data.id}, 'Diproses')" class="btn btn-sm btn-outline-warning mb-1" title="Proses"><i class="fa-solid fa-spinner"></i></button>
+                            <button onclick="ubahStatus(${data.id}, 'Selesai')" class="btn btn-sm btn-outline-success mb-1" title="Selesai"><i class="fa-solid fa-check"></i></button>
+                            <button onclick="ubahStatus(${data.id}, 'Ditolak')" class="btn btn-sm btn-outline-danger mb-1" title="Tolak"><i class="fa-solid fa-times"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function ubahStatus(id, statusBaru) {
+            let dataPengajuan = JSON.parse(localStorage.getItem('dataPengajuanDesa')) || [];
+            let index = dataPengajuan.findIndex(d => d.id === id);
+            
+            if(index !== -1) {
+                dataPengajuan[index].status = statusBaru;
+                localStorage.setItem('dataPengajuanDesa', JSON.stringify(dataPengajuan));
+                tampilkanData(); // Refresh tabel
+            }
+        }
+    </script>
+</body>
+</html>
