@@ -18,10 +18,14 @@ if (isset($_GET['teruskan_id'])) {
     exit;
 }
 
-// Logika Petugas: Menolak Surat
-if (isset($_GET['tolak_id'])) {
+// Logika Petugas: Menolak Surat DENGAN ALASAN (Fitur Extend Diagram)
+if (isset($_GET['tolak_id']) && isset($_GET['alasan'])) {
     $id_surat = (int)$_GET['tolak_id'];
-    $conn->query("UPDATE surat SET status='Ditolak' WHERE id=$id_surat");
+    $alasan = $conn->real_escape_string($_GET['alasan']);
+    
+    // Trik Cerdas: Gabungkan alasan penolakan ke dalam keterangan agar warga bisa membacanya
+    $conn->query("UPDATE surat SET status='Ditolak', keterangan = CONCAT(keterangan, ' | ❌ ALASAN DITOLAK: ', '$alasan') WHERE id=$id_surat");
+    
     header("Location: petugas-masuk.php");
     exit;
 }
@@ -63,6 +67,10 @@ $data_surat = $conn->query($query);
           <a href="petugas-diproses.php" class="sidebar-link"><span class="sidebar-link-ikon">⏳</span>Sedang Diproses</a>
           <a href="petugas-ditolak.php" class="sidebar-link"><span class="sidebar-link-ikon">❌</span>Surat Ditolak</a>
         </div>
+        <div class="sidebar-label">Kelola Data <span class="sidebar-label-ikon">∧</span></div>
+        <div class="sidebar-sub">
+          <a href="petugas-warga.php" class="sidebar-link"><span class="sidebar-link-ikon">👥</span>Data Warga</a>
+        </div>
         <div class="sidebar-label">Pengaturan <span class="sidebar-label-ikon">∧</span></div>
         <div class="sidebar-sub">
           <a href="profil.php" class="sidebar-link"><span class="sidebar-link-ikon">👤</span>Profil Saya</a>
@@ -99,7 +107,7 @@ $data_surat = $conn->query($query);
                 <th>Tanggal Masuk</th>
                 <th>Pemohon (Warga)</th>
                 <th>Jenis Surat</th>
-                <th>Keterangan Tambahan</th>
+                <th>Keterangan</th>
                 <th style="text-align:center;">Verifikasi</th>
               </tr>
             </thead>
@@ -113,8 +121,9 @@ $data_surat = $conn->query($query);
                       <td><?= htmlspecialchars($row['jenis_surat']) ?></td>
                       <td><?= htmlspecialchars($row['keterangan']) ?></td>
                       <td style="display:flex; gap:0.5rem; justify-content:center;">
-                          <a href="?teruskan_id=<?= $row['id'] ?>" class="btn-primer btn-kecil" style="background:#3b82f6; border:none; text-decoration:none;" onclick="return confirm('Berkas lengkap? Teruskan ke Kepala Desa?');">➡️ Teruskan ke Kades</a>
-                          <a href="?tolak_id=<?= $row['id'] ?>" class="btn-sekunder btn-kecil" style="color:#ef4444; border-color:#ef4444; text-decoration:none;" onclick="return confirm('Yakin ingin menolak pengajuan ini?');">✖ Tolak</a>
+                          <a href="?teruskan_id=<?= $row['id'] ?>" class="btn-primer btn-kecil" style="background:#3b82f6; border:none; text-decoration:none;" onclick="return confirm('Berkas lengkap? Teruskan ke Kepala Desa?');">➡️ Teruskan</a>
+                          
+                          <button onclick="tolakSurat(<?= $row['id'] ?>)" class="btn-sekunder btn-kecil" style="color:#ef4444; border-color:#ef4444; text-decoration:none; cursor:pointer;">✖ Tolak</button>
                       </td>
                     </tr>
                   <?php endwhile; ?>
@@ -126,11 +135,27 @@ $data_surat = $conn->query($query);
             </tbody>
           </table>
         </div>
-
       </main>
     </div>
   </div>
 
   <script src="../js/main.js"></script>
+  
+  <script>
+    function tolakSurat(idSurat) {
+        // Memunculkan kotak input (prompt)
+        let alasan = prompt("Masukkan alasan MENGAPA surat ini ditolak (wajib diisi):");
+        
+        // Jika petugas menekan OK dan isinya tidak kosong
+        if (alasan != null && alasan.trim() !== "") {
+            // Arahkan ke URL PHP dengan mengirim ID dan Alasannya
+            window.location.href = "?tolak_id=" + idSurat + "&alasan=" + encodeURIComponent(alasan);
+        } else if (alasan != null) {
+            // Jika menekan OK tapi tidak mengetik apa-apa
+            alert("Proses dibatalkan! Alasan penolakan WAJIB diisi.");
+        }
+        // Jika petugas menekan tombol 'Cancel', tidak terjadi apa-apa
+    }
+  </script>
 </body>
 </html>
