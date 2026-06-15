@@ -1,7 +1,7 @@
 <?php
 require 'koneksi.php';
 
-// Lindungi halaman: Pastikan yang login HANYA PETUGAS
+// Lindungi halaman
 if (!isset($_COOKIE['user_id']) || $_COOKIE['role'] != 'petugas') {
     header("Location: login.php");
     exit;
@@ -9,7 +9,7 @@ if (!isset($_COOKIE['user_id']) || $_COOKIE['role'] != 'petugas') {
 
 $nama_petugas = $_COOKIE['nama'];
 
-// Ambil pengajuan yang SUDAH diproses oleh petugas (Status: Persetujuan Kades atau Selesai)
+// Ambil pengajuan yang SUDAH diproses oleh petugas
 $query = "SELECT surat.*, pengguna.nama AS nama_warga 
           FROM surat 
           JOIN pengguna ON surat.id_warga = pengguna.id 
@@ -45,6 +45,11 @@ $data_surat = $conn->query($query);
           <a href="petugas-masuk.php" class="sidebar-link"><span class="sidebar-link-ikon">📩</span>Surat Masuk</a>
           <a href="petugas-diproses.php" class="sidebar-link aktif"><span class="sidebar-link-ikon">⏳</span>Sedang Diproses</a>
           <a href="petugas-ditolak.php" class="sidebar-link"><span class="sidebar-link-ikon">❌</span>Surat Ditolak</a>
+        </div>
+        <!-- MENU BARU DITAMBAHKAN DI SINI -->
+        <div class="sidebar-label">Kelola Data <span class="sidebar-label-ikon">∧</span></div>
+        <div class="sidebar-sub">
+          <a href="petugas-warga.php" class="sidebar-link"><span class="sidebar-link-ikon">👥</span>Data Warga</a>
         </div>
         <div class="sidebar-label">Pengaturan <span class="sidebar-label-ikon">∧</span></div>
         <div class="sidebar-sub">
@@ -89,7 +94,6 @@ $data_surat = $conn->query($query);
               <?php if ($data_surat->num_rows > 0): ?>
                   <?php $no = 1; while($row = $data_surat->fetch_assoc()): ?>
                     <?php 
-                      // Mewarnai badge berdasarkan status
                       $badge = 'badge-verifikasi';
                       if($row['status'] == 'Selesai') $badge = 'badge-disetujui';
                     ?>

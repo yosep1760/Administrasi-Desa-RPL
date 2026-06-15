@@ -1,7 +1,7 @@
 <?php
 require 'koneksi.php';
 
-// Lindungi halaman: Pastikan yang login HANYA PETUGAS (Gunakan COOKIE)
+// Lindungi halaman: Pastikan yang login HANYA PETUGAS
 if (!isset($_COOKIE['user_id']) || $_COOKIE['role'] != 'petugas') {
     header("Location: login.php");
     exit;
@@ -54,6 +54,12 @@ $data_surat = $conn->query($query);
           <a href="petugas-ditolak.php" class="sidebar-link"><span class="sidebar-link-ikon">❌</span>Surat Ditolak</a>
         </div>
         
+        <!-- MENU BARU DITAMBAHKAN DI SINI -->
+        <div class="sidebar-label">Kelola Data <span class="sidebar-label-ikon">∧</span></div>
+        <div class="sidebar-sub">
+          <a href="petugas-warga.php" class="sidebar-link"><span class="sidebar-link-ikon">👥</span>Data Warga</a>
+        </div>
+        
         <div class="sidebar-label">Pengaturan <span class="sidebar-label-ikon">∧</span></div>
         <div class="sidebar-sub">
           <a href="profil.php" class="sidebar-link"><span class="sidebar-link-ikon">👤</span>Profil Saya</a>
@@ -73,7 +79,7 @@ $data_surat = $conn->query($query);
           </div>
         </div>
         <form action="logout.php" method="POST" style="margin: 0;">
-            <button type="submit" class="avatar-pengguna" title="Keluar dari akun" aria-label="Logout" onclick="return confirm('Yakin ingin keluar?');" style="cursor: pointer;">👤</button>
+            <button type="submit" class="avatar-pengguna" title="Keluar dari akun" onclick="return confirm('Yakin ingin keluar?');" style="cursor: pointer;">👤</button>
         </form>
       </header>
 
