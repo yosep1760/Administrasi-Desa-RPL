@@ -1,7 +1,7 @@
 <?php
 require 'koneksi.php';
 
-// Lindungi halaman: Pastikan yang login HANYA KADES (Gunakan COOKIE)
+// Lindungi halaman: Pastikan yang login HANYA KADES
 if (!isset($_COOKIE['user_id']) || $_COOKIE['role'] != 'kades') {
     header("Location: login.php");
     exit;
@@ -9,17 +9,22 @@ if (!isset($_COOKIE['user_id']) || $_COOKIE['role'] != 'kades') {
 
 $nama_kades = $_COOKIE['nama'];
 
-// Logika Kades untuk menyetujui surat
+// Logika Kades: Menyetujui surat
 if (isset($_GET['approve_id'])) {
     $id_surat = (int)$_GET['approve_id'];
     $conn->query("UPDATE surat SET status='Selesai' WHERE id=$id_surat");
     header("Location: kades-request.php");
     exit;
 }
-// Logika Kades untuk menolak surat
-if (isset($_GET['reject_id'])) {
+
+// Logika Kades: Menolak Surat DENGAN ALASAN (Fitur Extend Diagram)
+if (isset($_GET['reject_id']) && isset($_GET['alasan'])) {
     $id_surat = (int)$_GET['reject_id'];
-    $conn->query("UPDATE surat SET status='Ditolak' WHERE id=$id_surat");
+    $alasan = $conn->real_escape_string($_GET['alasan']);
+    
+    // Trik Cerdas: Gabungkan alasan penolakan Kades ke dalam keterangan
+    $conn->query("UPDATE surat SET status='Ditolak', keterangan = CONCAT(keterangan, ' | ❌ DITOLAK KADES: ', '$alasan') WHERE id=$id_surat");
+    
     header("Location: kades-request.php");
     exit;
 }
@@ -29,7 +34,7 @@ $query = "SELECT surat.*, pengguna.nama AS nama_warga
           FROM surat 
           JOIN pengguna ON surat.id_warga = pengguna.id 
           WHERE surat.status = 'Persetujuan Kades'
-          ORDER BY surat.tanggal ASC"; // Diurutkan dari yang paling lama menunggu
+          ORDER BY surat.tanggal ASC"; 
 $data_surat = $conn->query($query);
 ?>
 <!DOCTYPE html>
@@ -112,7 +117,8 @@ $data_surat = $conn->query($query);
                       <td><?= htmlspecialchars($row['keterangan']) ?></td>
                       <td style="display:flex; gap:0.5rem; justify-content:center;">
                           <a href="?approve_id=<?= $row['id'] ?>" class="btn-primer btn-kecil" style="background:#22c55e; border:none; text-decoration:none;" onclick="return confirm('Yakin ingin menyetujui surat ini?');">✔ Setujui</a>
-                          <a href="?reject_id=<?= $row['id'] ?>" class="btn-sekunder btn-kecil" style="color:#ef4444; border-color:#ef4444; text-decoration:none;" onclick="return confirm('Yakin ingin menolak surat ini?');">✖ Tolak</a>
+                          
+                          <button onclick="tolakSuratKades(<?= $row['id'] ?>)" class="btn-sekunder btn-kecil" style="color:#ef4444; border-color:#ef4444; text-decoration:none; cursor:pointer;">✖ Tolak</button>
                       </td>
                     </tr>
                   <?php endwhile; ?>
@@ -130,5 +136,17 @@ $data_surat = $conn->query($query);
   </div>
 
   <script src="../js/main.js"></script>
+  
+  <script>
+    function tolakSuratKades(idSurat) {
+        let alasan = prompt("Masukkan alasan Bapak/Ibu Kepala Desa menolak surat ini (wajib diisi):");
+        
+        if (alasan != null && alasan.trim() !== "") {
+            window.location.href = "?reject_id=" + idSurat + "&alasan=" + encodeURIComponent(alasan);
+        } else if (alasan != null) {
+            alert("Proses dibatalkan! Alasan penolakan WAJIB diisi.");
+        }
+    }
+  </script>
 </body>
 </html>
