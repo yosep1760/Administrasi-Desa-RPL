@@ -1,26 +1,34 @@
 <?php
 require 'koneksi.php';
 
+// Jika sudah ada cookie (sudah login), lempar ke halaman yang sesuai
+if (isset($_COOKIE['user_id'])) {
+    if ($_COOKIE['role'] == 'kepala_desa') header("Location: dashboard-kades.php");
+    else if ($_COOKIE['role'] == 'petugas') header("Location: dashboard-petugas.php");
+    else header("Location: dashboard.php");
+    exit;
+}
+
 $error = "";
 
 // Jika tombol login ditekan
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $username = $conn->real_escape_string($_POST['username']);
+    $nik = $conn->real_escape_string($_POST['nik']);
     $password = $_POST['password'];
 
-    // Cari user di database
-    $result = $conn->query("SELECT * FROM pengguna WHERE username='$username' AND password='$password'");
-    
+    // [UPDATE PDM] Cari user di tabel Users menggunakan NIK
+    $result = $conn->query("SELECT * FROM Users WHERE NIK='$nik' AND password='$password'");
+
     if ($result->num_rows > 0) {
         $user = $result->fetch_assoc();
-        
-        // GUNAKAN COOKIE (Aman untuk Vercel Serverless)
-        setcookie('user_id', $user['id'], time() + (86400 * 7), "/"); // Aktif 7 hari
-        setcookie('nama', $user['nama'], time() + (86400 * 7), "/");
+
+        // Simpan data di COOKIE (Cocok untuk Vercel Serverless)
+        setcookie('user_id', $user['id_user'], time() + (86400 * 7), "/");
+        setcookie('nama', $user['nama_lengkap'], time() + (86400 * 7), "/");
         setcookie('role', $user['role'], time() + (86400 * 7), "/");
 
-        // Arahkan ke dashboard sesuai role
-        if ($user['role'] == 'kades') {
+        // Arahkan ke dashboard sesuai role PDM
+        if ($user['role'] == 'kepala_desa') {
             header("Location: dashboard-kades.php");
         } else if ($user['role'] == 'petugas') {
             header("Location: dashboard-petugas.php");
@@ -29,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
         exit;
     } else {
-        $error = "Username atau Password salah!";
+        $error = "NIK atau Password salah!";
     }
 }
 ?>
@@ -49,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     <div class="kartu-auth">
       <div class="auth-form-panel">
-        <h2>Login</h2>
+        <h2>Login Sistem</h2>
 
         <?php if($error != ""): ?>
             <div style="background: #f8d7da; color: #721c24; padding: 10px; border-radius: 5px; margin-bottom: 15px; font-size: 0.9rem;">
@@ -60,33 +68,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <form method="POST">
 
           <div class="grup-input">
-            <label for="loginUsername">Username</label>
-            <input
-              type="text"
-              name="username"
-              id="loginUsername"
-              class="input-teks"
-              placeholder="Gunakan: warga / petugas / kades"
-              required
-              autocomplete="username"
-            />
+            <label>NIK</label>
+            <input type="text" name="nik" class="input-teks" placeholder="Masukkan 16 digit NIK" required pattern="[0-9]{16}" />
           </div>
 
           <div class="grup-input">
-            <label for="loginPassword">Password</label>
-            <input
-              type="password"
-              name="password"
-              id="loginPassword"
-              class="input-teks"
-              placeholder="Pass: admin123"
-              required
-              autocomplete="current-password"
-            />
+            <label>Password</label>
+            <input type="password" name="password" class="input-teks" placeholder="Masukkan password" required />
           </div>
 
           <div style="margin-top:1.25rem;">
-            <button type="submit" class="btn-primer" style="width:100%;">Login</button>
+            <button type="submit" class="btn-primer" style="width:100%;">Masuk</button>
           </div>
 
         </form>
@@ -100,17 +92,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         </div>
       </div>
 
-      <div class="auth-sambutan-panel">
-        <h3>Welcome!</h3>
-        <p>
-          We are happy to have you with us again.
-          If you need anything, we are here to help.
-        </p>
-      </div>
-
     </div>
   </div>
 
-  <script src="../js/main.js"></script>
 </body>
 </html>
