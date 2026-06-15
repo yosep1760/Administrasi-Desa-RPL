@@ -2,41 +2,44 @@
 require 'koneksi.php';
 
 // Lindungi halaman: Pastikan yang login HANYA KADES
-if (!isset($_COOKIE['user_id']) || $_COOKIE['role'] != 'kades') {
+if (!isset($_COOKIE['user_id']) || $_COOKIE['role'] != 'kepala_desa') {
     header("Location: login.php");
     exit;
 }
 
 $nama_kades = $_COOKIE['nama'];
 
-// LOGIKA 1: Menekan tombol Setujui (Sesuai Diagram: Set status = Disetujui)
+// LOGIKA 1: Menekan tombol Setujui (Ubah status ke 'disetujui' sesuai ENUM PDM)
 if (isset($_GET['approve_id'])) {
-    $id_surat = (int)$_GET['approve_id'];
+    $id_pengajuan = (int)$_GET['approve_id'];
     
-    // Status diubah menjadi "Disetujui" agar masuk ke antrean Upload Petugas
-    $conn->query("UPDATE surat SET status='Disetujui' WHERE id=$id_surat");
+    // Status diubah menjadi "disetujui" agar masuk ke antrean Upload Petugas
+    $conn->query("UPDATE Pengajuan_Surat SET status='disetujui' WHERE id_pengajuan=$id_pengajuan");
     header("Location: kades-request.php");
     exit;
 }
 
-// LOGIKA 2: Menekan tombol Tolak (Sesuai Diagram: Menambahkan Alasan penolakan & Set status = Ditolak)
+// LOGIKA 2: Menekan tombol Tolak (Ubah status & isi kolom catatan_kades PDM)
 if (isset($_GET['reject_id']) && isset($_GET['alasan'])) {
-    $id_surat = (int)$_GET['reject_id'];
+    $id_pengajuan = (int)$_GET['reject_id'];
     $alasan = $conn->real_escape_string($_GET['alasan']);
     
-    // Menyimpan alasan penolakan dan mengubah status menjadi Ditolak
-    $conn->query("UPDATE surat SET status='Ditolak', keterangan = CONCAT(keterangan, ' | ❌ ALASAN PENOLAKAN KADES: ', '$alasan') WHERE id=$id_surat");
+    // Menyimpan alasan penolakan dan mengubah status menjadi 'ditolak'
+    $conn->query("UPDATE Pengajuan_Surat SET status='ditolak', catatan_kades='$alasan' WHERE id_pengajuan=$id_pengajuan");
     
     header("Location: kades-request.php");
     exit;
 }
 
-// Ambil HANYA pengajuan yang statusnya "Menunggu Approval Kepala desa"
-$query = "SELECT surat.*, pengguna.nama AS nama_warga 
-          FROM surat 
-          JOIN pengguna ON surat.id_warga = pengguna.id 
-          WHERE surat.status = 'Menunggu Approval Kepala desa'
-          ORDER BY surat.tanggal ASC"; 
+// [UPDATE PDM] Ambil pengajuan yang statusnya "menunggu_persetujuan"
+$query = "
+    SELECT ps.*, u.nama_lengkap AS nama_warga, js.nama_surat 
+    FROM Pengajuan_Surat ps 
+    JOIN Users u ON ps.id_user = u.id_user 
+    JOIN Jenis_Surat js ON ps.id_jenis = js.id_jenis 
+    WHERE ps.status = 'menunggu_persetujuan'
+    ORDER BY ps.tanggal_pengajuan ASC
+"; 
 $data_surat = $conn->query($query);
 ?>
 <!DOCTYPE html>
@@ -94,6 +97,7 @@ $data_surat = $conn->query($query);
       <main class="area-konten">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
           <h1 style="font-family:var(--font-judul);font-size:1.5rem;font-weight:700;">Daftar Approval Surat</h1>
+          <p style="color:var(--warna-teks-muda);">Daftar permohonan yang telah diverifikasi oleh petugas.</p>
         </div>
 
         <div class="kartu-tabel">
@@ -101,10 +105,10 @@ $data_surat = $conn->query($query);
             <thead>
               <tr>
                 <th>No</th>
-                <th>Tanggal</th>
-                <th>Pemohon (Warga)</th>
+                <th>Tgl Masuk</th>
+                <th>Pemohon</th>
                 <th>Jenis Surat</th>
-                <th>Keterangan</th>
+                <th>Keperluan</th>
                 <th style="text-align:center;">Review Pengajuan</th>
               </tr>
             </thead>
@@ -113,16 +117,17 @@ $data_surat = $conn->query($query);
                   <?php $no = 1; while($row = $data_surat->fetch_assoc()): ?>
                     <tr>
                       <td><?= $no++ ?></td>
-                      <td><?= date('d M Y, H:i', strtotime($row['tanggal'])) ?></td>
+                      <td><?= date('d M Y, H:i', strtotime($row['tanggal_pengajuan'])) ?></td>
                       <td><strong><?= htmlspecialchars($row['nama_warga']) ?></strong></td>
-                      <td><?= htmlspecialchars($row['jenis_surat']) ?></td>
-                      <td><?= htmlspecialchars($row['keterangan']) ?></td>
+                      <td><?= htmlspecialchars($row['nama_surat']) ?></td>
+                      <td><?= htmlspecialchars($row['keperluan']) ?></td>
                       <td style="display:flex; gap:0.5rem; justify-content:center;">
-                          <!-- Tombol Setujui -->
-                          <a href="?approve_id=<?= $row['id'] ?>" class="btn-primer btn-kecil" style="background:#22c55e; border:none; text-decoration:none;" onclick="return confirm('Menyetujui surat ini untuk di-upload oleh petugas?');">✔ Setujui</a>
                           
-                          <!-- Tombol Tolak memanggil Javascript -->
-                          <button onclick="tolakSuratKades(<?= $row['id'] ?>)" class="btn-sekunder btn-kecil" style="color:#ef4444; border-color:#ef4444; cursor:pointer;">✖ Tolak</button>
+                          <a href="detail-surat.php?id=<?= $row['id_pengajuan'] ?>" class="btn-sekunder btn-kecil" style="text-decoration:none;" title="Lihat Lampiran & Catatan Petugas">🔍 Cek</a>
+
+                          <a href="?approve_id=<?= $row['id_pengajuan'] ?>" class="btn-primer btn-kecil" style="background:#22c55e; border:none; text-decoration:none;" onclick="return confirm('Menyetujui surat ini untuk di-upload oleh petugas?');">✔ Setujui</a>
+                          
+                          <button onclick="tolakSuratKades(<?= $row['id_pengajuan'] ?>)" class="btn-sekunder btn-kecil" style="color:#ef4444; border-color:#ef4444; cursor:pointer;">✖ Tolak</button>
                       </td>
                     </tr>
                   <?php endwhile; ?>
@@ -141,13 +146,12 @@ $data_surat = $conn->query($query);
 
   <script src="../js/main.js"></script>
   
-  <!-- SCRIPT UNTUK POP-UP ALASAN PENOLAKAN KADES -->
   <script>
-    function tolakSuratKades(idSurat) {
-        let alasan = prompt("Menambahkan Alasan penolakan (wajib diisi):");
+    function tolakSuratKades(idPengajuan) {
+        let alasan = prompt("Tulis alasan penolakan mutlak dari Kepala Desa (wajib diisi):");
         
         if (alasan != null && alasan.trim() !== "") {
-            window.location.href = "?reject_id=" + idSurat + "&alasan=" + encodeURIComponent(alasan);
+            window.location.href = "?reject_id=" + idPengajuan + "&alasan=" + encodeURIComponent(alasan);
         } else if (alasan != null) {
             alert("Proses dibatalkan! Alasan penolakan tidak boleh kosong.");
         }

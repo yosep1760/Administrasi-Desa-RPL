@@ -7,57 +7,57 @@ if (!isset($_COOKIE['user_id'])) {
     exit;
 }
 
-$id_user = $_COOKIE['user_id'];
+$id_user_login = (int)$_COOKIE['user_id'];
 $role_user = $_COOKIE['role'];
 
 if (!isset($_GET['id'])) {
     die("ID Surat tidak ditemukan.");
 }
 
-$id_surat = (int)$_GET['id'];
+$id_pengajuan = (int)$_GET['id'];
 
-// Ambil data surat
-$query = $conn->query("SELECT surat.*, pengguna.nama AS nama_pemohon, pengguna.nik AS nik_pemohon 
-                       FROM surat 
-                       JOIN pengguna ON surat.id_warga = pengguna.id 
-                       WHERE surat.id = $id_surat");
+// [UPDATE PDM] Ambil data surat dengan JOIN ke Users dan Jenis_Surat
+$query = $conn->query("
+    SELECT ps.*, u.nama_lengkap AS nama_pemohon, u.NIK AS nik_pemohon, u.alamat, js.nama_surat 
+    FROM Pengajuan_Surat ps 
+    JOIN Users u ON ps.id_user = u.id_user 
+    JOIN Jenis_Surat js ON ps.id_jenis = js.id_jenis 
+    WHERE ps.id_pengajuan = $id_pengajuan
+");
 
 if ($query->num_rows == 0) {
-    die("Data surat tidak valid.");
+    die("Data surat tidak valid atau tidak ditemukan.");
 }
 
 $data = $query->fetch_assoc();
 
-// Pastikan surat sudah selesai
-if ($data['status'] != 'Selesai') {
+// Keamanan: Warga hanya bisa cetak suratnya sendiri
+if ($role_user == 'warga' && $data['id_user'] != $id_user_login) {
+    die("Akses Ditolak! Anda tidak berhak mencetak surat ini.");
+}
+
+// Pastikan surat sudah selesai sesuai ENUM
+if ($data['status'] != 'selesai') {
     die("Surat ini belum selesai diproses atau belum di-upload oleh petugas.");
 }
 
-// Ekstrak Nomor Surat dan Tanggal Surat dari kolom keterangan yang di-upload Petugas
-$keterangan_asli = $data['keterangan'];
-$no_surat = "145/___/DS-KOSAR/2026"; // Default jika kosong
-$tgl_surat = date('Y-m-d');
+// Ekstrak Data langsung dari kolom PDM
+$no_surat = $data['no_surat'] ? htmlspecialchars($data['no_surat']) : "---/DS-KOSAR/2026";
+$tgl_surat = $data['tanggal_surat'] ? date('d M Y', strtotime($data['tanggal_surat'])) : date('d M Y');
+$keperluan = htmlspecialchars($data['keperluan']);
+$nama_pemohon = htmlspecialchars($data['nama_pemohon']);
+$nik_pemohon = htmlspecialchars($data['nik_pemohon']);
+$nama_surat = htmlspecialchars($data['nama_surat']);
 
-if (strpos($keterangan_asli, '| 📄 NO SURAT:') !== false) {
-    $parts = explode('|', $keterangan_asli);
-    $keterangan_asli = trim($parts[0]); // Ambil keperluan awal warga
-    
-    foreach ($parts as $p) {
-        if (strpos($p, 'NO SURAT:') !== false) {
-            $no_surat = trim(str_replace('📄 NO SURAT:', '', $p));
-        }
-        if (strpos($p, 'TGL:') !== false) {
-            $tgl_surat = trim(str_replace('TGL:', '', $p));
-        }
-    }
-}
+// Alamat bisa jadi kosong saat daftar, kita beri default jika kosong
+$alamat_pemohon = htmlspecialchars($data['alamat']) ?: "Desa Kosar, RT 01 / RW 02, Kec. Makmur Jaya";
 ?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cetak <?= htmlspecialchars($data['jenis_surat']) ?></title>
+    <title>Cetak <?= $nama_surat ?></title>
     <style>
         /* Gaya Khusus Kertas A4 */
         body {
@@ -163,8 +163,8 @@ if (strpos($keterangan_asli, '| 📄 NO SURAT:') !== false) {
             </div>
 
             <div class="judul-surat">
-                <h3><?= strtoupper(htmlspecialchars($data['jenis_surat'])) ?></h3>
-                <p>Nomor: <?= htmlspecialchars($no_surat) ?></p>
+                <h3><?= strtoupper($nama_surat) ?></h3>
+                <p>Nomor: <?= $no_surat ?></p>
             </div>
 
             <div class="isi-surat">
@@ -174,12 +174,12 @@ if (strpos($keterangan_asli, '| 📄 NO SURAT:') !== false) {
                     <tr>
                         <td style="width: 150px;">Nama Lengkap</td>
                         <td style="width: 10px;">:</td>
-                        <td><strong><?= htmlspecialchars($data['nama_pemohon']) ?></strong></td>
+                        <td><strong><?= $nama_pemohon ?></strong></td>
                     </tr>
                     <tr>
                         <td>Nomor Induk Kependudukan (NIK)</td>
                         <td>:</td>
-                        <td><?= htmlspecialchars($data['nik_pemohon']) ?></td>
+                        <td><?= $nik_pemohon ?></td>
                     </tr>
                     <tr>
                         <td>Pekerjaan</td>
@@ -189,19 +189,19 @@ if (strpos($keterangan_asli, '| 📄 NO SURAT:') !== false) {
                     <tr>
                         <td>Alamat</td>
                         <td>:</td>
-                        <td>Desa Kosar, RT 01 / RW 02, Kec. Makmur Jaya</td>
+                        <td><?= $alamat_pemohon ?></td>
                     </tr>
                 </table>
 
                 <p>Orang tersebut di atas adalah benar-benar warga Desa Kosar yang berdomisili di alamat tersebut. Surat ini diterbitkan sebagai persyaratan untuk:</p>
                 
-                <p style="text-align: center; font-weight: bold; margin: 20px 0;">" <?= htmlspecialchars($keterangan_asli) ?> "</p>
+                <p style="text-align: center; font-weight: bold; margin: 20px 0;">" <?= $keperluan ?> "</p>
 
-                <p>Demikian surat <?= strtolower(htmlspecialchars($data['jenis_surat'])) ?> ini dibuat dengan sebenarnya agar dapat dipergunakan sebagaimana mestinya oleh pihak yang berkepentingan.</p>
+                <p>Demikian surat <?= strtolower($nama_surat) ?> ini dibuat dengan sebenarnya agar dapat dipergunakan sebagaimana mestinya oleh pihak yang berkepentingan.</p>
             </div>
 
             <div class="ttd-box">
-                <p>Desa Kosar, <?= date('d M Y', strtotime($tgl_surat)) ?></p>
+                <p>Desa Kosar, <?= $tgl_surat ?></p>
                 <p>Kepala Desa Kosar</p>
                 <div class="ttd-space"></div>
                 <p style="text-decoration: underline; font-weight: bold;">( Bpk/Ibu Kepala Desa )</p>

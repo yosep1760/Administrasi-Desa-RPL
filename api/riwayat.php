@@ -7,11 +7,17 @@ if (!isset($_COOKIE['user_id']) || $_COOKIE['role'] != 'warga') {
     exit;
 }
 
-$id_warga = $_COOKIE['user_id'];
+$id_user = (int)$_COOKIE['user_id'];
 $nama_warga = $_COOKIE['nama'];
 
-// Ambil semua data riwayat surat milik warga yang sedang login
-$query_riwayat = $conn->query("SELECT * FROM surat WHERE id_warga = $id_warga ORDER BY tanggal DESC");
+// [UPDATE PDM] Ambil data riwayat surat dari tabel Pengajuan_Surat JOIN Jenis_Surat
+$query_riwayat = $conn->query("
+    SELECT ps.*, js.nama_surat 
+    FROM Pengajuan_Surat ps
+    JOIN Jenis_Surat js ON ps.id_jenis = js.id_jenis
+    WHERE ps.id_user = $id_user 
+    ORDER BY ps.tanggal_pengajuan DESC
+");
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -32,16 +38,12 @@ $query_riwayat = $conn->query("SELECT * FROM surat WHERE id_warga = $id_warga OR
         <input type="search" class="input-cari" placeholder="Search" />
       </div>
       <nav class="sidebar-nav">
-        <a href="dashboard.php" class="sidebar-link">
-          <span class="sidebar-link-ikon">📊</span>Dashboard
-        </a>
-        
         <div class="sidebar-label">Ajukan Surat <span class="sidebar-label-ikon">∧</span></div>
         <div class="sidebar-sub">
-          <a href="pengajuan.php?jenis=nikah" class="sidebar-link"><span class="sidebar-link-ikon">✉</span>Surat Pengantar Nikah</a>
-          <a href="pengajuan.php?jenis=usaha" class="sidebar-link"><span class="sidebar-link-ikon">✉</span>Surat Keterangan Usaha</a>
-          <a href="pengajuan.php?jenis=domisili" class="sidebar-link"><span class="sidebar-link-ikon">✉</span>Surat Keterangan Domisili</a>
-          <a href="pengajuan.php?jenis=lainnya" class="sidebar-link"><span class="sidebar-link-ikon">✉</span>Surat lorem ipsum</a>
+          <a href="pengajuan.php?id_jenis=1" class="sidebar-link"><span class="sidebar-link-ikon">✉</span>Surat Pengantar Nikah</a>
+          <a href="pengajuan.php?id_jenis=2" class="sidebar-link"><span class="sidebar-link-ikon">✉</span>Surat Keterangan Usaha</a>
+          <a href="pengajuan.php?id_jenis=3" class="sidebar-link"><span class="sidebar-link-ikon">✉</span>Surat Keter. Domisili</a>
+          <a href="pengajuan.php?id_jenis=4" class="sidebar-link"><span class="sidebar-link-ikon">✉</span>Surat Lainnya</a>
         </div>
 
         <div class="sidebar-label">Informasi <span class="sidebar-label-ikon">∧</span></div>
@@ -60,7 +62,7 @@ $query_riwayat = $conn->query("SELECT * FROM surat WHERE id_warga = $id_warga OR
           </button>
           <div class="header-pengguna">
             <h3>Halo, <?= htmlspecialchars($nama_warga) ?></h3>
-            <span>Warga</span>
+            <span>Warga Desa</span>
           </div>
         </div>
         <form action="logout.php" method="POST" style="margin: 0;">
@@ -78,7 +80,7 @@ $query_riwayat = $conn->query("SELECT * FROM surat WHERE id_warga = $id_warga OR
             <thead>
               <tr>
                 <th>No</th>
-                <th>Tanggal Pengajuan</th>
+                <th>Tgl Pengajuan</th>
                 <th>Jenis Surat</th>
                 <th>Status Saat Ini</th>
                 <th style="text-align:center;">Aksi Lanjutan</th>
@@ -88,27 +90,41 @@ $query_riwayat = $conn->query("SELECT * FROM surat WHERE id_warga = $id_warga OR
               <?php if ($query_riwayat->num_rows > 0): ?>
                   <?php $no = 1; while($row = $query_riwayat->fetch_assoc()): ?>
                     <?php 
-                      // Pewarnaan Badge Status
-                      $badgeClass = 'badge-menunggu'; // Kuning pucat
-                      if($row['status'] == 'Perlu Perbaikan' || $row['status'] == 'Ditolak') $badgeClass = 'badge-ditolak'; // Merah
-                      if($row['status'] == 'Menunggu Approval Kepala desa' || $row['status'] == 'Disetujui') $badgeClass = 'badge-verifikasi'; // Biru
-                      if($row['status'] == 'Selesai') $badgeClass = 'badge-disetujui'; // Hijau
+                      // Menerjemahkan ENUM Database menjadi Teks dan Warna Badge yang rapi
+                      $status_db = $row['status'];
+                      $badgeClass = 'badge-menunggu';
+                      $status_text = 'Menunggu';
+
+                      if ($status_db == 'menunggu_verifikasi') {
+                          $badgeClass = 'badge-menunggu'; // Kuning
+                          $status_text = 'Menunggu Petugas';
+                      } elseif ($status_db == 'menunggu_persetujuan') {
+                          $badgeClass = 'badge-verifikasi'; // Biru
+                          $status_text = 'Proses Kades';
+                      } elseif ($status_db == 'disetujui') {
+                          $badgeClass = 'badge-verifikasi'; // Biru
+                          $status_text = 'Disetujui (Tahap Cetak)';
+                      } elseif ($status_db == 'selesai') {
+                          $badgeClass = 'badge-disetujui'; // Hijau
+                          $status_text = 'Selesai';
+                      } elseif ($status_db == 'ditolak') {
+                          $badgeClass = 'badge-ditolak'; // Merah
+                          $status_text = 'Ditolak / Perbaikan';
+                      }
                     ?>
                     <tr>
                       <td><?= $no++ ?></td>
-                      <td><?= date('d M Y, H:i', strtotime($row['tanggal'])) ?></td>
-                      <td><strong><?= htmlspecialchars($row['jenis_surat']) ?></strong></td>
-                      <td><span class="badge <?= $badgeClass ?>"><?= $row['status'] ?></span></td>
+                      <td><?= date('d M Y, H:i', strtotime($row['tanggal_pengajuan'])) ?></td>
+                      <td><strong><?= htmlspecialchars($row['nama_surat']) ?></strong></td>
+                      <td><span class="badge <?= $badgeClass ?>"><?= $status_text ?></span></td>
                       
                       <td style="text-align:center;">
                           <?php 
-                            // PERCABANGAN LOGIKA ACTIVITY DIAGRAM 5
-                            if ($row['status'] == 'Selesai') {
-                                // Jika Selesai, tampilkan tombol CETAK yang membuka tab dokumen PDF baru
-                                echo '<a href="cetak.php?id='.$row['id'].'" target="_blank" class="btn-primer btn-kecil" style="background:#16a34a; border:none; text-decoration:none;">🖨️ Cetak Dokumen</a>';
+                            // PERCABANGAN TOMBOL (Jika selesai = Cetak, jika belum = Detail)
+                            if ($status_db == 'selesai') {
+                                echo '<a href="cetak.php?id='.$row['id_pengajuan'].'" target="_blank" class="btn-primer btn-kecil" style="background:#16a34a; border:none; text-decoration:none;">🖨️ Cetak Dokumen</a>';
                             } else {
-                                // Jika Belum Selesai (Termasuk Ditolak/Perbaikan), tampilkan tombol DETAIL
-                                echo '<a href="detail-surat.php?id='.$row['id'].'" class="btn-sekunder btn-kecil" style="text-decoration:none;">🔍 Lihat Detail</a>';
+                                echo '<a href="detail-surat.php?id='.$row['id_pengajuan'].'" class="btn-sekunder btn-kecil" style="text-decoration:none;">🔍 Lihat Detail</a>';
                             }
                           ?>
                       </td>
