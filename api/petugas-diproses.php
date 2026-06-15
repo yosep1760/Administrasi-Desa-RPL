@@ -8,12 +8,15 @@ if (!isset($_COOKIE['user_id']) || $_COOKIE['role'] != 'petugas') {
 
 $nama_petugas = $_COOKIE['nama'];
 
-// [UPDATE] Ambil pengajuan yang sedang di Kades atau sudah selesai
-$query = "SELECT surat.*, pengguna.nama AS nama_warga 
-          FROM surat 
-          JOIN pengguna ON surat.id_warga = pengguna.id 
-          WHERE surat.status IN ('Menunggu Approval Kepala desa', 'Disetujui', 'Selesai')
-          ORDER BY surat.tanggal DESC"; 
+// [UPDATE PDM] Ambil pengajuan yang sedang di Kades (menunggu_persetujuan), di-ACC (disetujui), atau sudah (selesai)
+$query = "
+    SELECT ps.*, u.nama_lengkap AS nama_warga, js.nama_surat 
+    FROM Pengajuan_Surat ps 
+    JOIN Users u ON ps.id_user = u.id_user 
+    JOIN Jenis_Surat js ON ps.id_jenis = js.id_jenis
+    WHERE ps.status IN ('menunggu_persetujuan', 'disetujui', 'selesai')
+    ORDER BY ps.tanggal_pengajuan DESC
+"; 
 $data_surat = $conn->query($query);
 ?>
 <!DOCTYPE html>
@@ -90,15 +93,20 @@ $data_surat = $conn->query($query);
               <?php if ($data_surat->num_rows > 0): ?>
                   <?php $no = 1; while($row = $data_surat->fetch_assoc()): ?>
                     <?php 
-                      $badge = 'badge-verifikasi';
-                      if($row['status'] == 'Selesai') $badge = 'badge-disetujui';
+                      // Terjemahkan ENUM PDM
+                      $status_db = $row['status'];
+                      $badgeClass = 'badge-verifikasi';
+                      $status_text = 'Proses Kades';
+
+                      if ($status_db == 'disetujui') { $status_text = 'Menunggu Anda Upload'; }
+                      elseif ($status_db == 'selesai') { $badgeClass = 'badge-disetujui'; $status_text = 'Selesai'; }
                     ?>
                     <tr>
                       <td><?= $no++ ?></td>
-                      <td><?= date('d M Y, H:i', strtotime($row['tanggal'])) ?></td>
+                      <td><?= date('d M Y, H:i', strtotime($row['tanggal_pengajuan'])) ?></td>
                       <td><strong><?= htmlspecialchars($row['nama_warga']) ?></strong></td>
-                      <td><?= htmlspecialchars($row['jenis_surat']) ?></td>
-                      <td><span class="badge <?= $badge ?>"><?= $row['status'] ?></span></td>
+                      <td><?= htmlspecialchars($row['nama_surat']) ?></td>
+                      <td><span class="badge <?= $badgeClass ?>"><?= $status_text ?></span></td>
                     </tr>
                   <?php endwhile; ?>
               <?php else: ?>

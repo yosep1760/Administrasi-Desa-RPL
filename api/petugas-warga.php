@@ -12,19 +12,25 @@ $pesan = "";
 
 // LOGIKA 1: Tambah Data Warga Baru
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['tambah_warga'])) {
-    $nama = $conn->real_escape_string($_POST['nama']);
+    // [UPDATE PDM] Sesuaikan dengan kolom tabel Users di PDM
+    $nama_lengkap = $conn->real_escape_string($_POST['nama_lengkap']);
     $nik = $conn->real_escape_string($_POST['nik']);
-    $username = $conn->real_escape_string($_POST['username']);
+    $email = $conn->real_escape_string($_POST['email']);
+    $no_hp = $conn->real_escape_string($_POST['no_hp']);
+    $jenis_kelamin = $conn->real_escape_string($_POST['jenis_kelamin']);
     $password = $conn->real_escape_string($_POST['password']);
     
-    // Cek apakah NIK atau Username sudah dipakai orang lain
-    $cek = $conn->query("SELECT * FROM pengguna WHERE username='$username' OR nik='$nik'");
+    // Cek apakah NIK sudah dipakai orang lain
+    $cek = $conn->query("SELECT * FROM Users WHERE NIK='$nik'");
     if ($cek->num_rows > 0) {
-        $pesan = "<div style='background: #fee2e2; color: #dc2626; padding: 12px; border-radius: 6px; margin-bottom: 20px; border: 1px solid #fecaca;'><strong>Gagal!</strong> Username atau NIK tersebut sudah terdaftar di database.</div>";
+        $pesan = "<div style='background: #fee2e2; color: #dc2626; padding: 12px; border-radius: 6px; margin-bottom: 20px; border: 1px solid #fecaca;'><strong>Gagal!</strong> NIK tersebut sudah terdaftar di database.</div>";
     } else {
-        $query_insert = "INSERT INTO pengguna (nama, nik, username, password, role) VALUES ('$nama', '$nik', '$username', '$password', 'warga')";
+        $query_insert = "INSERT INTO Users (nama_lengkap, NIK, email, no_hp, jenis_kelamin, password, role) 
+                         VALUES ('$nama_lengkap', '$nik', '$email', '$no_hp', '$jenis_kelamin', '$password', 'warga')";
         if ($conn->query($query_insert) === TRUE) {
             $pesan = "<div style='background: #dcfce7; color: #16a34a; padding: 12px; border-radius: 6px; margin-bottom: 20px; border: 1px solid #bbf7d0;'><strong>Berhasil!</strong> Akun warga baru telah ditambahkan.</div>";
+        } else {
+            $pesan = "<div style='background: #fee2e2; color: #dc2626; padding: 12px; border-radius: 6px; margin-bottom: 20px; border: 1px solid #fecaca;'><strong>Error:</strong> " . $conn->error . "</div>";
         }
     }
 }
@@ -32,17 +38,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['tambah_warga'])) {
 // LOGIKA 2: Hapus Data Warga
 if (isset($_GET['hapus_id'])) {
     $id_hapus = (int)$_GET['hapus_id'];
-    
-    // Trik Aman: Hapus dulu semua riwayat surat milik warga ini agar database tidak error, baru hapus akunnya
-    $conn->query("DELETE FROM surat WHERE id_warga = $id_hapus");
-    $conn->query("DELETE FROM pengguna WHERE id = $id_hapus");
+    // [UPDATE PDM] Karena ada ON DELETE CASCADE di database, menghapus Warga akan otomatis menghapus semua suratnya! Sangat praktis.
+    $conn->query("DELETE FROM Users WHERE id_user = $id_hapus");
     
     header("Location: petugas-warga.php");
     exit;
 }
 
-// Ambil SEMUA data akun yang rolenya 'warga'
-$data_warga = $conn->query("SELECT * FROM pengguna WHERE role='warga' ORDER BY id DESC");
+// [UPDATE PDM] Ambil SEMUA data akun yang rolenya 'warga'
+$data_warga = $conn->query("SELECT * FROM Users WHERE role='warga' ORDER BY id_user DESC");
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -71,6 +75,7 @@ $data_warga = $conn->query("SELECT * FROM pengguna WHERE role='warga' ORDER BY i
         <div class="sidebar-sub">
           <a href="petugas-masuk.php" class="sidebar-link"><span class="sidebar-link-ikon">📩</span>Surat Masuk</a>
           <a href="petugas-diproses.php" class="sidebar-link"><span class="sidebar-link-ikon">⏳</span>Sedang Diproses</a>
+          <a href="petugas-upload.php" class="sidebar-link"><span class="sidebar-link-ikon">📤</span>Upload Surat (Selesai)</a>
           <a href="petugas-ditolak.php" class="sidebar-link"><span class="sidebar-link-ikon">❌</span>Surat Ditolak</a>
         </div>
         <div class="sidebar-label">Kelola Data <span class="sidebar-label-ikon">∧</span></div>
@@ -115,15 +120,26 @@ $data_warga = $conn->query("SELECT * FROM pengguna WHERE role='warga' ORDER BY i
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:1.25rem;">
                     <div class="grup-form">
                         <label class="label-form">Nama Lengkap</label>
-                        <input type="text" name="nama" class="input-form" placeholder="Contoh: Budi Santoso" required />
+                        <input type="text" name="nama_lengkap" class="input-form" placeholder="Contoh: Budi Santoso" required />
                     </div>
                     <div class="grup-form">
-                        <label class="label-form">NIK</label>
+                        <label class="label-form">NIK (16 Digit)</label>
                         <input type="text" name="nik" class="input-form" placeholder="16 digit angka" required pattern="[0-9]{16}" title="Harus 16 digit angka" />
                     </div>
                     <div class="grup-form">
-                        <label class="label-form">Username Login</label>
-                        <input type="text" name="username" class="input-form" placeholder="budi123" required />
+                        <label class="label-form">Email</label>
+                        <input type="email" name="email" class="input-form" placeholder="email@contoh.com" required />
+                    </div>
+                    <div class="grup-form">
+                        <label class="label-form">Nomor Handphone</label>
+                        <input type="text" name="no_hp" class="input-form" placeholder="08xx..." required />
+                    </div>
+                    <div class="grup-form">
+                        <label class="label-form">Jenis Kelamin</label>
+                        <select name="jenis_kelamin" class="input-form" required>
+                            <option value="laki-laki">Laki-laki</option>
+                            <option value="perempuan">Perempuan</option>
+                        </select>
                     </div>
                     <div class="grup-form">
                         <label class="label-form">Password Login</label>
@@ -144,7 +160,8 @@ $data_warga = $conn->query("SELECT * FROM pengguna WHERE role='warga' ORDER BY i
                 <th>No</th>
                 <th>Nama Lengkap</th>
                 <th>NIK</th>
-                <th>Username Login</th>
+                <th>No. HP</th>
+                <th>Gender</th>
                 <th style="text-align:center;">Aksi</th>
               </tr>
             </thead>
@@ -153,17 +170,18 @@ $data_warga = $conn->query("SELECT * FROM pengguna WHERE role='warga' ORDER BY i
                   <?php $no = 1; while($row = $data_warga->fetch_assoc()): ?>
                     <tr>
                       <td><?= $no++ ?></td>
-                      <td><strong><?= htmlspecialchars($row['nama']) ?></strong></td>
-                      <td><?= htmlspecialchars($row['nik']) ?></td>
-                      <td><?= htmlspecialchars($row['username']) ?></td>
+                      <td><strong><?= htmlspecialchars($row['nama_lengkap']) ?></strong></td>
+                      <td><?= htmlspecialchars($row['NIK']) ?></td>
+                      <td><?= htmlspecialchars($row['no_hp']) ?></td>
+                      <td style="text-transform: capitalize;"><?= htmlspecialchars($row['jenis_kelamin']) ?></td>
                       <td style="text-align:center;">
-                          <a href="?hapus_id=<?= $row['id'] ?>" class="btn-sekunder btn-kecil" style="color:#ef4444; border-color:#ef4444; text-decoration:none;" onclick="return confirm('PERINGATAN! Menghapus akun ini juga akan menghapus SEMUA riwayat surat miliknya. Yakin lanjutkan?');">🗑️ Hapus</a>
+                          <a href="?hapus_id=<?= $row['id_user'] ?>" class="btn-sekunder btn-kecil" style="color:#ef4444; border-color:#ef4444; text-decoration:none;" onclick="return confirm('PERINGATAN! Menghapus akun ini juga akan menghapus SEMUA riwayat surat miliknya. Yakin lanjutkan?');">🗑️ Hapus</a>
                       </td>
                     </tr>
                   <?php endwhile; ?>
               <?php else: ?>
                   <tr>
-                    <td colspan="5" style="text-align:center; padding: 20px;">Belum ada data warga terdaftar.</td>
+                    <td colspan="6" style="text-align:center; padding: 20px;">Belum ada data warga terdaftar.</td>
                   </tr>
               <?php endif; ?>
             </tbody>

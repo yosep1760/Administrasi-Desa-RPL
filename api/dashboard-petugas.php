@@ -8,17 +8,20 @@ if (!isset($_COOKIE['user_id']) || $_COOKIE['role'] != 'petugas') {
 
 $nama_petugas = $_COOKIE['nama'];
 
-// [UPDATE] Hitung statistik sesuai nama status baru di Activity Diagram
-$c_menunggu = $conn->query("SELECT COUNT(*) as c FROM surat WHERE status='Menunggu Verifikasi Petugas'")->fetch_assoc()['c'];
-$c_diproses = $conn->query("SELECT COUNT(*) as c FROM surat WHERE status IN ('Menunggu Approval Kepala desa', 'Disetujui')")->fetch_assoc()['c'];
-$c_selesai = $conn->query("SELECT COUNT(*) as c FROM surat WHERE status='Selesai'")->fetch_assoc()['c'];
+// [UPDATE PDM] Hitung statistik sesuai ENUM baru di database
+$c_menunggu = $conn->query("SELECT COUNT(*) as c FROM Pengajuan_Surat WHERE status='menunggu_verifikasi'")->fetch_assoc()['c'];
+$c_diproses = $conn->query("SELECT COUNT(*) as c FROM Pengajuan_Surat WHERE status IN ('menunggu_persetujuan', 'disetujui')")->fetch_assoc()['c'];
+$c_selesai = $conn->query("SELECT COUNT(*) as c FROM Pengajuan_Surat WHERE status='selesai'")->fetch_assoc()['c'];
 
-// Ambil 5 pengajuan terbaru
-$query = "SELECT surat.*, pengguna.nama AS nama_warga 
-          FROM surat 
-          JOIN pengguna ON surat.id_warga = pengguna.id 
-          WHERE surat.status = 'Menunggu Verifikasi Petugas'
-          ORDER BY surat.tanggal ASC LIMIT 5";
+// [UPDATE PDM] Ambil 5 pengajuan terbaru yang masuk ke meja petugas
+$query = "
+    SELECT ps.*, u.nama_lengkap AS nama_warga, js.nama_surat 
+    FROM Pengajuan_Surat ps
+    JOIN Users u ON ps.id_user = u.id_user 
+    JOIN Jenis_Surat js ON ps.id_jenis = js.id_jenis
+    WHERE ps.status = 'menunggu_verifikasi'
+    ORDER BY ps.tanggal_pengajuan ASC LIMIT 5
+";
 $data_surat = $conn->query($query);
 ?>
 <!DOCTYPE html>
@@ -125,8 +128,8 @@ $data_surat = $conn->query($query);
                     <tr>
                       <td><?= $no++ ?></td>
                       <td><strong><?= htmlspecialchars($row['nama_warga']) ?></strong></td>
-                      <td><?= htmlspecialchars($row['jenis_surat']) ?></td>
-                      <td><?= date('d M Y', strtotime($row['tanggal'])) ?></td>
+                      <td><?= htmlspecialchars($row['nama_surat']) ?></td>
+                      <td><?= date('d M Y', strtotime($row['tanggal_pengajuan'])) ?></td>
                       <td><span class="badge badge-menunggu">Menunggu Verifikasi</span></td>
                     </tr>
                   <?php endwhile; ?>

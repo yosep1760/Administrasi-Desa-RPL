@@ -2,38 +2,28 @@
 require 'koneksi.php';
 
 // Lindungi halaman: Pastikan yang login HANYA KADES (Gunakan COOKIE)
-if (!isset($_COOKIE['user_id']) || $_COOKIE['role'] != 'kades') {
+if (!isset($_COOKIE['user_id']) || $_COOKIE['role'] != 'kepala_desa') {
     header("Location: login.php");
     exit;
 }
 
 $nama_kades = $_COOKIE['nama'];
 
-// Logika Kades untuk menyetujui surat
-if (isset($_GET['approve_id'])) {
-    $id_surat = (int)$_GET['approve_id'];
-    $conn->query("UPDATE surat SET status='Selesai' WHERE id=$id_surat");
-    header("Location: dashboard-kades.php");
-    exit;
-}
-if (isset($_GET['reject_id'])) {
-    $id_surat = (int)$_GET['reject_id'];
-    $conn->query("UPDATE surat SET status='Ditolak' WHERE id=$id_surat");
-    header("Location: dashboard-kades.php");
-    exit;
-}
+// [UPDATE PDM] Hitung statistik khusus Kades
+$c_total = $conn->query("SELECT COUNT(*) as c FROM Pengajuan_Surat")->fetch_assoc()['c'];
+$c_menunggu = $conn->query("SELECT COUNT(*) as c FROM Pengajuan_Surat WHERE status='menunggu_verifikasi'")->fetch_assoc()['c'];
+$c_persetujuan = $conn->query("SELECT COUNT(*) as c FROM Pengajuan_Surat WHERE status='menunggu_persetujuan'")->fetch_assoc()['c'];
+$c_selesai = $conn->query("SELECT COUNT(*) as c FROM Pengajuan_Surat WHERE status='selesai'")->fetch_assoc()['c'];
 
-// Hitung statistik khusus Kades
-$c_total = $conn->query("SELECT COUNT(*) as c FROM surat")->fetch_assoc()['c'];
-$c_menunggu = $conn->query("SELECT COUNT(*) as c FROM surat WHERE status='Menunggu' OR status='Diproses'")->fetch_assoc()['c'];
-$c_persetujuan = $conn->query("SELECT COUNT(*) as c FROM surat WHERE status='Persetujuan Kades'")->fetch_assoc()['c'];
-$c_selesai = $conn->query("SELECT COUNT(*) as c FROM surat WHERE status='Selesai'")->fetch_assoc()['c'];
-
-// Ambil pengajuan yang butuh persetujuan Kades ATAU pengajuan terbaru
-$query = "SELECT surat.*, pengguna.nama AS nama_warga 
-          FROM surat 
-          JOIN pengguna ON surat.id_warga = pengguna.id 
-          ORDER BY FIELD(status, 'Persetujuan Kades') DESC, surat.id DESC LIMIT 5";
+// [UPDATE PDM] Ambil pengajuan terbaru yang butuh persetujuan Kades
+$query = "
+    SELECT ps.*, u.nama_lengkap AS nama_warga, js.nama_surat 
+    FROM Pengajuan_Surat ps 
+    JOIN Users u ON ps.id_user = u.id_user 
+    JOIN Jenis_Surat js ON ps.id_jenis = js.id_jenis
+    WHERE ps.status = 'menunggu_persetujuan'
+    ORDER BY ps.tanggal_pengajuan ASC LIMIT 5
+";
 $data_surat = $conn->query($query);
 ?>
 <!DOCTYPE html>
@@ -61,9 +51,13 @@ $data_surat = $conn->query($query);
         </div>
         <div class="sidebar-label">Layanan <span class="sidebar-label-ikon">∧</span></div>
         <div class="sidebar-sub">
-          <a href="kades-request.php" class="sidebar-link"><span class="sidebar-link-ikon">📩</span>Request Surat</a>
+          <a href="kades-request.php" class="sidebar-link"><span class="sidebar-link-ikon">📩</span>Request Approval</a>
           <a href="kades-disetujui.php" class="sidebar-link"><span class="sidebar-link-ikon">✅</span>Surat Disetujui</a>
           <a href="kades-ditolak.php" class="sidebar-link"><span class="sidebar-link-ikon">❌</span>Surat Ditolak</a>
+        </div>
+        <div class="sidebar-label">Pengaturan <span class="sidebar-label-ikon">∧</span></div>
+        <div class="sidebar-sub">
+          <a href="profil.php" class="sidebar-link"><span class="sidebar-link-ikon">👤</span>Profil Saya</a>
         </div>
       </nav>
     </aside>
@@ -86,7 +80,7 @@ $data_surat = $conn->query($query);
 
       <main class="area-konten">
         <h1 style="font-family:var(--font-judul);font-size:1.5rem;font-weight:700;margin-bottom:1.5rem;">
-          Dashboard
+          Dashboard Kepala Desa
         </h1>
 
         <div class="grid-statistik">
@@ -96,7 +90,7 @@ $data_surat = $conn->query($query);
           </div>
           <div class="kartu-statistik">
             <div class="statistik-angka"><?= $c_menunggu ?> <span class="statistik-naik">↑</span></div>
-            <div class="statistik-label">Menunggu / Diproses</div>
+            <div class="statistik-label">Verifikasi Petugas</div>
           </div>
           <div class="kartu-statistik">
             <div class="statistik-angka"><?= $c_persetujuan ?> <span class="statistik-naik" style="color:var(--warna-aksen);">!</span></div>
@@ -111,30 +105,25 @@ $data_surat = $conn->query($query);
         <div class="kartu-tabel" style="margin-top: 2rem;">
           <div class="kartu-tabel-header">
             <h3>Antrean Persetujuan Kepala Desa</h3>
-            <a href="#">Lihat semua &rarr;</a>
+            <a href="kades-request.php">Lihat semua &rarr;</a>
           </div>
 
           <?php if ($data_surat->num_rows > 0): ?>
             <?php while($row = $data_surat->fetch_assoc()): ?>
                 <div style="padding:1rem 1.25rem;border-bottom:1px solid var(--warna-border); display:flex; justify-content:space-between; align-items:center;">
                     <div style="display:flex; flex-direction:column; gap:0.25rem;">
-                        <strong style="color:var(--warna-teks);"><?= htmlspecialchars($row['nama_warga']) ?> — <?= htmlspecialchars($row['jenis_surat']) ?></strong>
-                        <span style="color:var(--warna-teks-muda);font-size:0.85rem;">Status: <?= $row['status'] ?> | Tgl: <?= date('d M Y', strtotime($row['tanggal'])) ?></span>
+                        <strong style="color:var(--warna-teks);"><?= htmlspecialchars($row['nama_warga']) ?> — <?= htmlspecialchars($row['nama_surat']) ?></strong>
+                        <span style="color:var(--warna-teks-muda);font-size:0.85rem;">Tanggal: <?= date('d M Y', strtotime($row['tanggal_pengajuan'])) ?></span>
                     </div>
                     
-                    <?php if($row['status'] == 'Persetujuan Kades'): ?>
-                        <div style="display:flex; gap:0.5rem;">
-                            <a href="?approve_id=<?= $row['id'] ?>" class="btn-primer btn-kecil" style="background:#22c55e; border:none;">✔ Setujui</a>
-                            <a href="?reject_id=<?= $row['id'] ?>" class="btn-sekunder btn-kecil" style="color:#ef4444; border-color:#ef4444;">✖ Tolak</a>
-                        </div>
-                    <?php else: ?>
-                        <span style="font-size:0.85rem; font-weight:bold; color:var(--warna-teks-muda);">Telah Diproses</span>
-                    <?php endif; ?>
+                    <div style="display:flex; gap:0.5rem;">
+                        <a href="kades-request.php" class="btn-primer btn-kecil" style="background:#3b82f6; border:none; text-decoration:none;">🔍 Proses</a>
+                    </div>
                 </div>
             <?php endwhile; ?>
           <?php else: ?>
             <div style="padding:2rem; text-align:center; color:var(--warna-teks-muda);">
-                Belum ada surat yang memerlukan persetujuan.
+                Belum ada surat terbaru yang memerlukan persetujuan.
             </div>
           <?php endif; ?>
         </div>

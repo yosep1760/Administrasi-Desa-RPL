@@ -1,5 +1,5 @@
 <?php
-session_start();
+// Gunakan pengecekan cookie
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -23,8 +23,15 @@ session_start();
     </ul>
     
     <div class="navbar-aksi">
-      <?php if(isset($_SESSION['user_id'])): ?>
-          <a href="dashboard.php" class="btn-primer">Dashboard</a>
+      <?php if(isset($_COOKIE['user_id'])): ?>
+          <?php 
+             $link_dashboard = 'dashboard.php';
+             if(isset($_COOKIE['role'])) {
+                 if($_COOKIE['role'] == 'kepala_desa') $link_dashboard = 'dashboard-kades.php';
+                 elseif($_COOKIE['role'] == 'petugas') $link_dashboard = 'dashboard-petugas.php';
+             }
+          ?>
+          <a href="<?= $link_dashboard ?>" class="btn-primer">Dashboard Saya</a>
       <?php else: ?>
           <a href="login.php" class="btn-primer">Login</a>
       <?php endif; ?>

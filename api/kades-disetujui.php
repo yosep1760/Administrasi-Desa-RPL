@@ -2,19 +2,22 @@
 require 'koneksi.php';
 
 // Lindungi halaman: Pastikan yang login HANYA KADES (Gunakan COOKIE)
-if (!isset($_COOKIE['user_id']) || $_COOKIE['role'] != 'kades') {
+if (!isset($_COOKIE['user_id']) || $_COOKIE['role'] != 'kepala_desa') {
     header("Location: login.php");
     exit;
 }
 
 $nama_kades = $_COOKIE['nama'];
 
-// Ambil HANYA pengajuan yang SUDAH DISETUJUI (Status = Selesai)
-$query = "SELECT surat.*, pengguna.nama AS nama_warga 
-          FROM surat 
-          JOIN pengguna ON surat.id_warga = pengguna.id 
-          WHERE surat.status = 'Selesai'
-          ORDER BY surat.tanggal DESC"; // Diurutkan dari yang paling baru disetujui
+// [UPDATE PDM] Ambil HANYA pengajuan yang SUDAH DISETUJUI oleh Kades (bisa status 'disetujui' atau sudah 'selesai' di-upload petugas)
+$query = "
+    SELECT ps.*, u.nama_lengkap AS nama_warga, js.nama_surat 
+    FROM Pengajuan_Surat ps 
+    JOIN Users u ON ps.id_user = u.id_user 
+    JOIN Jenis_Surat js ON ps.id_jenis = js.id_jenis
+    WHERE ps.status IN ('disetujui', 'selesai')
+    ORDER BY ps.tanggal_pengajuan DESC
+";
 $data_surat = $conn->query($query);
 ?>
 <!DOCTYPE html>
@@ -79,11 +82,11 @@ $data_surat = $conn->query($query);
             <thead>
               <tr>
                 <th>No</th>
-                <th>Tanggal Disetujui</th>
+                <th>Tanggal Pengajuan</th>
                 <th>Pemohon (Warga)</th>
                 <th>Jenis Surat</th>
                 <th>Status</th>
-                <th style="text-align:center;">Arsip</th>
+                <th style="text-align:center;">Aksi</th>
               </tr>
             </thead>
             <tbody>
@@ -91,12 +94,12 @@ $data_surat = $conn->query($query);
                   <?php $no = 1; while($row = $data_surat->fetch_assoc()): ?>
                     <tr>
                       <td><?= $no++ ?></td>
-                      <td><?= date('d M Y, H:i', strtotime($row['tanggal'])) ?></td>
+                      <td><?= date('d M Y, H:i', strtotime($row['tanggal_pengajuan'])) ?></td>
                       <td><strong><?= htmlspecialchars($row['nama_warga']) ?></strong></td>
-                      <td><?= htmlspecialchars($row['jenis_surat']) ?></td>
-                      <td><span class="badge badge-disetujui">✔ Selesai</span></td>
+                      <td><?= htmlspecialchars($row['nama_surat']) ?></td>
+                      <td><span class="badge badge-disetujui">✔ Telah Anda Setujui</span></td>
                       <td style="text-align:center;">
-                          <button class="btn-sekunder btn-kecil" onclick="window.print()" title="Cetak Arsip">🖨️ Cetak</button>
+                          <a href="detail-surat.php?id=<?= $row['id_pengajuan'] ?>" class="btn-sekunder btn-kecil" style="text-decoration:none;">🔍 Arsip Data</a>
                       </td>
                     </tr>
                   <?php endwhile; ?>

@@ -1,5 +1,5 @@
 <?php
-session_start();
+// Tidak menggunakan session_start() lagi karena kita menggunakan $_COOKIE
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -25,8 +25,16 @@ session_start();
     </ul>
 
     <div class="navbar-aksi">
-      <?php if(isset($_SESSION['user_id'])): ?>
-          <a href="dashboard.php" class="btn-primer">Dashboard</a>
+      <?php if(isset($_COOKIE['user_id'])): ?>
+          <?php 
+             // Arahkan ke dashboard yang tepat sesuai Role PDM
+             $link_dashboard = 'dashboard.php';
+             if(isset($_COOKIE['role'])) {
+                 if($_COOKIE['role'] == 'kepala_desa') $link_dashboard = 'dashboard-kades.php';
+                 elseif($_COOKIE['role'] == 'petugas') $link_dashboard = 'dashboard-petugas.php';
+             }
+          ?>
+          <a href="<?= $link_dashboard ?>" class="btn-primer">Dashboard Saya</a>
       <?php else: ?>
           <a href="login.php" class="btn-primer">Login</a>
       <?php endif; ?>
@@ -45,7 +53,7 @@ session_start();
         <span class="hero-label">Selamat Datang di NamaWeb</span>
         <h1>Melayani Kebutuhan<br /><span>Administrasi Desa</span><br />dengan Lebih Praktis</h1>
         <div class="hero-tombol">
-          <a href="dashboard.php" class="btn-aksen">Ajukan Surat</a>
+          <a href="login.php" class="btn-aksen">Ajukan Surat</a>
           <a href="tentang.php" class="btn-sekunder" style="border-color:rgba(255,255,255,0.4);color:white;">Selengkapnya</a>
         </div>
       </div>
@@ -73,17 +81,17 @@ session_start();
         <p>Pilih jenis surat yang ingin diajukan dan lakukan proses pengurusan dengan lebih mudah, cepat, dan terarah.</p>
       </div>
       <div class="grid-layanan">
-        <div class="kartu-layanan" onclick="window.location.href='dashboard.php'">
+        <div class="kartu-layanan" onclick="window.location.href='login.php'">
           <div class="kartu-layanan-gambar">💍</div>
           <h3>Surat Pengantar Nikah</h3>
           <p>Surat keterangan pengantar dari desa untuk keperluan pernikahan di KUA atau catatan sipil.</p>
         </div>
-        <div class="kartu-layanan" onclick="window.location.href='dashboard.php'">
+        <div class="kartu-layanan" onclick="window.location.href='login.php'">
           <div class="kartu-layanan-gambar">🏪</div>
           <h3>Surat Keterangan Usaha</h3>
           <p>Keterangan resmi bahwa warga menjalankan usaha di wilayah desa, diperlukan untuk izin atau perbankan.</p>
         </div>
-        <div class="kartu-layanan" onclick="window.location.href='dashboard.php'">
+        <div class="kartu-layanan" onclick="window.location.href='login.php'">
           <div class="kartu-layanan-gambar">🏠</div>
           <h3>Surat Keterangan Domisili</h3>
           <p>Bukti resmi bahwa warga berdomisili di desa tersebut, digunakan untuk keperluan administrasi.</p>
@@ -160,7 +168,7 @@ session_start();
           </div>
           <div class="item-faq">
             <button class="pertanyaan-faq">Dokumen apa saja yang diperlukan untuk pengajuan surat? <span class="ikon-faq">∨</span></button>
-            <div class="jawaban-faq"><p>Dokumen yang umumnya diperlukan adalah foto KTP dan Kartu Keluarga (KK) dalam format PDF atau gambar.</p></div>
+            <div class="jawaban-faq"><p>Dokumen yang umumnya diperlukan adalah file Scan KTP dan Kartu Keluarga (KK) dalam format PDF atau gambar.</p></div>
           </div>
           <div class="item-faq">
             <button class="pertanyaan-faq">Berapa lama proses pengajuan surat diselesaikan? <span class="ikon-faq">∨</span></button>

@@ -7,14 +7,14 @@ if (!isset($_COOKIE['user_id'])) {
     exit;
 }
 
-$id_user = $_COOKIE['user_id'];
+$id_user = (int)$_COOKIE['user_id'];
 
-// Ambil data user secara lengkap dari database
-$query = $conn->query("SELECT * FROM pengguna WHERE id = $id_user");
+// [UPDATE PDM] Ambil data user secara lengkap dari tabel Users
+$query = $conn->query("SELECT * FROM Users WHERE id_user = $id_user");
 $user = $query->fetch_assoc();
 
 // Ambil huruf pertama dari nama untuk ikon avatar
-$huruf_awal = strtoupper(substr($user['nama'], 0, 1));
+$huruf_awal = strtoupper(substr($user['nama_lengkap'], 0, 1));
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -43,10 +43,10 @@ $huruf_awal = strtoupper(substr($user['nama'], 0, 1));
             </a>
             <div class="sidebar-label">Ajukan Surat <span class="sidebar-label-ikon">∧</span></div>
             <div class="sidebar-sub">
-              <a href="pengajuan.php?jenis=nikah" class="sidebar-link"><span class="sidebar-link-ikon">✉</span>Surat Pengantar Nikah</a>
-              <a href="pengajuan.php?jenis=usaha" class="sidebar-link"><span class="sidebar-link-ikon">✉</span>Surat Keterangan Usaha</a>
-              <a href="pengajuan.php?jenis=domisili" class="sidebar-link"><span class="sidebar-link-ikon">✉</span>Surat Keterangan Domisili</a>
-              <a href="pengajuan.php?jenis=lainnya" class="sidebar-link"><span class="sidebar-link-ikon">✉</span>Surat lorem ipsum</a>
+              <a href="pengajuan.php?id_jenis=1" class="sidebar-link"><span class="sidebar-link-ikon">✉</span>Surat Pengantar Nikah</a>
+              <a href="pengajuan.php?id_jenis=2" class="sidebar-link"><span class="sidebar-link-ikon">✉</span>Surat Keterangan Usaha</a>
+              <a href="pengajuan.php?id_jenis=3" class="sidebar-link"><span class="sidebar-link-ikon">✉</span>Surat Keterangan Domisili</a>
+              <a href="pengajuan.php?id_jenis=4" class="sidebar-link"><span class="sidebar-link-ikon">✉</span>Surat Lainnya</a>
             </div>
             <div class="sidebar-label">Informasi <span class="sidebar-label-ikon">∧</span></div>
             <div class="sidebar-sub">
@@ -63,16 +63,16 @@ $huruf_awal = strtoupper(substr($user['nama'], 0, 1));
               <a href="profil.php" class="sidebar-link aktif"><span class="sidebar-link-ikon">👤</span>Profil Saya</a>
             </div>
 
-        <?php elseif ($user['role'] == 'kades'): ?>
+        <?php elseif ($user['role'] == 'kepala_desa'): ?>
             <div class="sidebar-label">Dashboard <span class="sidebar-label-ikon">∧</span></div>
             <div class="sidebar-sub">
               <a href="dashboard-kades.php" class="sidebar-link"><span class="sidebar-link-ikon">🏠</span>Home</a>
             </div>
             <div class="sidebar-label">Layanan <span class="sidebar-label-ikon">∧</span></div>
             <div class="sidebar-sub">
-              <a href="#" class="sidebar-link"><span class="sidebar-link-ikon">📩</span>Request Surat</a>
-              <a href="#" class="sidebar-link"><span class="sidebar-link-ikon">✅</span>Surat Disetujui</a>
-              <a href="#" class="sidebar-link"><span class="sidebar-link-ikon">❌</span>Surat Ditolak</a>
+              <a href="kades-request.php" class="sidebar-link"><span class="sidebar-link-ikon">📩</span>Request Surat</a>
+              <a href="kades-disetujui.php" class="sidebar-link"><span class="sidebar-link-ikon">✅</span>Surat Disetujui</a>
+              <a href="kades-ditolak.php" class="sidebar-link"><span class="sidebar-link-ikon">❌</span>Surat Ditolak</a>
             </div>
             <div class="sidebar-label">Pengaturan <span class="sidebar-label-ikon">∧</span></div>
             <div class="sidebar-sub">
@@ -90,8 +90,8 @@ $huruf_awal = strtoupper(substr($user['nama'], 0, 1));
             <span></span><span></span><span></span>
           </button>
           <div class="header-pengguna">
-            <h3>Halo, <?= htmlspecialchars($user['nama']) ?></h3>
-            <span style="text-transform: capitalize;"><?= htmlspecialchars($user['role']) ?></span>
+            <h3>Halo, <?= htmlspecialchars($user['nama_lengkap']) ?></h3>
+            <span style="text-transform: capitalize;"><?= str_replace('_', ' ', htmlspecialchars($user['role'])) ?></span>
           </div>
         </div>
         <form action="logout.php" method="POST" style="margin: 0;">
@@ -102,7 +102,7 @@ $huruf_awal = strtoupper(substr($user['nama'], 0, 1));
       <main class="area-konten">
         <div class="kartu-profil">
           <div class="profil-header">
-            <h2>Profil Saya</h2>
+            <h2>Profil Data Diri</h2>
             <button class="btn-primer btn-kecil" id="tombolEditProfil" onclick="toggleEditProfil()">
               ✏ Edit Profil
             </button>
@@ -111,8 +111,8 @@ $huruf_awal = strtoupper(substr($user['nama'], 0, 1));
           <div class="profil-avatar">
             <div class="avatar-lingkaran" id="avatarLingkaran"><?= $huruf_awal ?></div>
             <div>
-              <div class="profil-nama"><?= htmlspecialchars($user['nama']) ?></div>
-              <div class="profil-peran" style="text-transform: capitalize;">Role: <?= htmlspecialchars($user['role']) ?></div>
+              <div class="profil-nama"><?= htmlspecialchars($user['nama_lengkap']) ?></div>
+              <div class="profil-peran" style="text-transform: capitalize;">Role: <?= str_replace('_', ' ', htmlspecialchars($user['role'])) ?></div>
             </div>
           </div>
 
@@ -123,16 +123,26 @@ $huruf_awal = strtoupper(substr($user['nama'], 0, 1));
           <table class="tabel-profil" id="tabelProfil">
             <tbody>
               <tr>
-                <td>Username:</td>
-                <td><strong><?= htmlspecialchars($user['username']) ?></strong></td>
+                <td>NIK Kependudukan:</td>
+                <td><strong><?= htmlspecialchars($user['NIK']) ?></strong></td>
               </tr>
               <tr>
-                <td>Nomor Telepon:</td>
-                <td style="color:var(--warna-teks-muda);">Belum diatur (Contoh: 0812-3456-7890)</td>
+                <td>Email Akun:</td>
+                <td><?= htmlspecialchars($user['email']) ?></td>
               </tr>
               <tr>
-                <td>Alamat:</td>
-                <td style="color:var(--warna-teks-muda);">Belum diatur</td>
+                <td>Nomor Handphone:</td>
+                <td><?= htmlspecialchars($user['no_hp']) ?></td>
+              </tr>
+              <tr>
+                <td>Jenis Kelamin:</td>
+                <td style="text-transform: capitalize;"><?= htmlspecialchars($user['jenis_kelamin']) ?></td>
+              </tr>
+              <tr>
+                <td>Alamat Lengkap:</td>
+                <td style="color: <?= $user['alamat'] ? 'inherit' : 'var(--warna-teks-muda)' ?>;">
+                    <?= $user['alamat'] ? htmlspecialchars($user['alamat']) : "Belum diatur. Silakan lengkapi profil Anda." ?>
+                </td>
               </tr>
               <tr>
                 <td>Password:</td>
@@ -170,7 +180,7 @@ $huruf_awal = strtoupper(substr($user['nama'], 0, 1));
     }
 
     function toggleEditProfil() {
-      alert('Fitur edit profil belum terhubung ke database. Silakan kembangkan di tahap selanjutnya!');
+      alert('Fitur edit profil (menambahkan Alamat dan Tempat Lahir) silakan kembangkan di tahap selanjutnya!');
     }
   </script>
 </body>

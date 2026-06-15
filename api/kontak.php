@@ -1,5 +1,5 @@
 <?php
-session_start();
+// Gunakan pengecekan cookie
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -22,8 +22,15 @@ session_start();
       <li><a href="kontak.php">Kontak</a></li>
     </ul>
     <div class="navbar-aksi">
-      <?php if(isset($_SESSION['user_id'])): ?>
-          <a href="dashboard.php" class="btn-primer">Dashboard</a>
+      <?php if(isset($_COOKIE['user_id'])): ?>
+          <?php 
+             $link_dashboard = 'dashboard.php';
+             if(isset($_COOKIE['role'])) {
+                 if($_COOKIE['role'] == 'kepala_desa') $link_dashboard = 'dashboard-kades.php';
+                 elseif($_COOKIE['role'] == 'petugas') $link_dashboard = 'dashboard-petugas.php';
+             }
+          ?>
+          <a href="<?= $link_dashboard ?>" class="btn-primer">Dashboard Saya</a>
       <?php else: ?>
           <a href="login.php" class="btn-primer">Login</a>
       <?php endif; ?>
@@ -85,38 +92,23 @@ session_start();
           <form onsubmit="kirimPesan(event)">
 
             <div class="grup-form" style="margin-bottom:1rem;">
-              <label for="konNama" style="display:block;font-size:0.825rem;font-weight:600;margin-bottom:0.35rem;">
-                Nama Lengkap
-              </label>
+              <label for="konNama" style="display:block;font-size:0.825rem;font-weight:600;margin-bottom:0.35rem;">Nama Lengkap</label>
               <input type="text" id="konNama" class="input-form" placeholder="Nama Anda" required />
             </div>
 
             <div class="grup-form" style="margin-bottom:1rem;">
-              <label for="konEmail" style="display:block;font-size:0.825rem;font-weight:600;margin-bottom:0.35rem;">
-                Email
-              </label>
+              <label for="konEmail" style="display:block;font-size:0.825rem;font-weight:600;margin-bottom:0.35rem;">Email</label>
               <input type="email" id="konEmail" class="input-form" placeholder="email@contoh.com" required />
             </div>
 
             <div class="grup-form" style="margin-bottom:1rem;">
-              <label for="konSubjek" style="display:block;font-size:0.825rem;font-weight:600;margin-bottom:0.35rem;">
-                Subjek
-              </label>
+              <label for="konSubjek" style="display:block;font-size:0.825rem;font-weight:600;margin-bottom:0.35rem;">Subjek</label>
               <input type="text" id="konSubjek" class="input-form" placeholder="Perihal pesan Anda" required />
             </div>
 
             <div class="grup-form" style="margin-bottom:1.25rem;">
-              <label for="konPesan" style="display:block;font-size:0.825rem;font-weight:600;margin-bottom:0.35rem;">
-                Pesan
-              </label>
-              <textarea
-                id="konPesan"
-                class="input-form"
-                rows="5"
-                placeholder="Tulis pesan Anda di sini..."
-                required
-                style="resize:vertical;"
-              ></textarea>
+              <label for="konPesan" style="display:block;font-size:0.825rem;font-weight:600;margin-bottom:0.35rem;">Pesan</label>
+              <textarea id="konPesan" class="input-form" rows="5" placeholder="Tulis pesan Anda di sini..." required style="resize:vertical;"></textarea>
             </div>
 
             <button type="submit" class="btn-primer" style="width:100%;">Kirim Pesan</button>
@@ -155,6 +147,7 @@ session_start();
         </ul>
       </div>
     </div>
+    
     <hr class="footer-garis" style="max-width:1100px;margin:0 auto 1rem;" />
     <div class="footer-bawah">
       <p>NamaWeb © 2026</p>
@@ -164,15 +157,11 @@ session_start();
 
   <script src="../js/main.js"></script>
   <script>
-    // Fungsi kirim pesan form kontak (simulasi JS bawaanmu dipertahankan)
     function kirimPesan(e) {
       e.preventDefault();
-      
-      // Jika kamu menggunakan fungsi tampilkanLoading di main.js
       if (typeof tampilkanLoading === "function") {
           tampilkanLoading(e.submitter);
       }
-      
       setTimeout(function () {
         alert('Pesan Anda berhasil dikirim! Kami akan menghubungi Anda segera.');
         e.target.reset();

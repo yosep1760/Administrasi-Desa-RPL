@@ -2,19 +2,22 @@
 require 'koneksi.php';
 
 // Lindungi halaman: Pastikan yang login HANYA KADES (Gunakan COOKIE)
-if (!isset($_COOKIE['user_id']) || $_COOKIE['role'] != 'kades') {
+if (!isset($_COOKIE['user_id']) || $_COOKIE['role'] != 'kepala_desa') {
     header("Location: login.php");
     exit;
 }
 
 $nama_kades = $_COOKIE['nama'];
 
-// Ambil HANYA pengajuan yang DITOLAK
-$query = "SELECT surat.*, pengguna.nama AS nama_warga 
-          FROM surat 
-          JOIN pengguna ON surat.id_warga = pengguna.id 
-          WHERE surat.status = 'Ditolak'
-          ORDER BY surat.tanggal DESC";
+// [UPDATE PDM] Ambil HANYA pengajuan yang DITOLAK beserta catatan penolakannya
+$query = "
+    SELECT ps.*, u.nama_lengkap AS nama_warga, js.nama_surat 
+    FROM Pengajuan_Surat ps 
+    JOIN Users u ON ps.id_user = u.id_user 
+    JOIN Jenis_Surat js ON ps.id_jenis = js.id_jenis
+    WHERE ps.status = 'ditolak'
+    ORDER BY ps.tanggal_pengajuan DESC
+";
 $data_surat = $conn->query($query);
 ?>
 <!DOCTYPE html>
@@ -79,21 +82,28 @@ $data_surat = $conn->query($query);
             <thead>
               <tr>
                 <th>No</th>
-                <th>Tanggal Penolakan</th>
+                <th>Tanggal Pengajuan</th>
                 <th>Pemohon (Warga)</th>
                 <th>Jenis Surat</th>
-                <th>Status</th>
+                <th>Alasan Penolakan</th>
               </tr>
             </thead>
             <tbody>
               <?php if ($data_surat->num_rows > 0): ?>
                   <?php $no = 1; while($row = $data_surat->fetch_assoc()): ?>
+                    <?php 
+                        // Prioritaskan menampilkan catatan dari Kades jika ada, jika tidak, tampilkan dari petugas
+                        $alasan = $row['catatan_kades'] ? "Kades: " . $row['catatan_kades'] : "Petugas: " . $row['catatan_petugas'];
+                    ?>
                     <tr>
                       <td><?= $no++ ?></td>
-                      <td><?= date('d M Y, H:i', strtotime($row['tanggal'])) ?></td>
+                      <td><?= date('d M Y, H:i', strtotime($row['tanggal_pengajuan'])) ?></td>
                       <td><strong><?= htmlspecialchars($row['nama_warga']) ?></strong></td>
-                      <td><?= htmlspecialchars($row['jenis_surat']) ?></td>
-                      <td><span class="badge badge-ditolak">✖ Ditolak</span></td>
+                      <td><?= htmlspecialchars($row['nama_surat']) ?></td>
+                      <td>
+                          <span class="badge badge-ditolak">✖ Ditolak</span>
+                          <span style="font-size:0.85rem; display:block; margin-top:5px; color:#ef4444;"><?= htmlspecialchars($alasan) ?></span>
+                      </td>
                     </tr>
                   <?php endwhile; ?>
               <?php else: ?>

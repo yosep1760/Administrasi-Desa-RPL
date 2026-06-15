@@ -8,12 +8,15 @@ if (!isset($_COOKIE['user_id']) || $_COOKIE['role'] != 'petugas') {
 
 $nama_petugas = $_COOKIE['nama'];
 
-// [UPDATE] Ambil pengajuan yang butuh perbaikan (dari Petugas) atau Ditolak mutlak (dari Kades)
-$query = "SELECT surat.*, pengguna.nama AS nama_warga 
-          FROM surat 
-          JOIN pengguna ON surat.id_warga = pengguna.id 
-          WHERE surat.status IN ('Perlu Perbaikan', 'Ditolak')
-          ORDER BY surat.tanggal DESC";
+// [UPDATE PDM] Ambil pengajuan yang statusnya 'ditolak'
+$query = "
+    SELECT ps.*, u.nama_lengkap AS nama_warga, js.nama_surat 
+    FROM Pengajuan_Surat ps 
+    JOIN Users u ON ps.id_user = u.id_user 
+    JOIN Jenis_Surat js ON ps.id_jenis = js.id_jenis
+    WHERE ps.status = 'ditolak'
+    ORDER BY ps.tanggal_pengajuan DESC
+";
 $data_surat = $conn->query($query);
 ?>
 <!DOCTYPE html>
@@ -83,23 +86,31 @@ $data_surat = $conn->query($query);
                 <th>Tanggal Pengajuan</th>
                 <th>Pemohon (Warga)</th>
                 <th>Jenis Surat</th>
-                <th>Status</th>
+                <th>Keterangan Ditolak</th>
               </tr>
             </thead>
             <tbody>
               <?php if ($data_surat->num_rows > 0): ?>
                   <?php $no = 1; while($row = $data_surat->fetch_assoc()): ?>
+                    <?php 
+                        // Tampilkan alasan dari PDM
+                        $alasan = $row['catatan_petugas'] ? "Petugas: " . $row['catatan_petugas'] : "";
+                        $alasan = $row['catatan_kades'] ? "Kades: " . $row['catatan_kades'] : $alasan;
+                    ?>
                     <tr>
                       <td><?= $no++ ?></td>
-                      <td><?= date('d M Y, H:i', strtotime($row['tanggal'])) ?></td>
+                      <td><?= date('d M Y, H:i', strtotime($row['tanggal_pengajuan'])) ?></td>
                       <td><strong><?= htmlspecialchars($row['nama_warga']) ?></strong></td>
-                      <td><?= htmlspecialchars($row['jenis_surat']) ?></td>
-                      <td><span class="badge badge-ditolak">✖ <?= $row['status'] ?></span></td>
+                      <td><?= htmlspecialchars($row['nama_surat']) ?></td>
+                      <td>
+                          <span class="badge badge-ditolak">✖ Ditolak</span>
+                          <span style="font-size:0.85rem; display:block; margin-top:5px; color:#ef4444;"><?= htmlspecialchars($alasan) ?></span>
+                      </td>
                     </tr>
                   <?php endwhile; ?>
               <?php else: ?>
                   <tr>
-                    <td colspan="5" style="text-align:center; padding: 20px;">Belum ada riwayat surat yang ditolak atau perlu perbaikan.</td>
+                    <td colspan="5" style="text-align:center; padding: 20px;">Belum ada riwayat surat yang ditolak.</td>
                   </tr>
               <?php endif; ?>
             </tbody>

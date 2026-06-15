@@ -1,23 +1,29 @@
 <?php
 require 'koneksi.php';
 
-// Cek COOKIE, bukan SESSION
+// Cek COOKIE
 if (!isset($_COOKIE['user_id']) || $_COOKIE['role'] != 'warga') {
     header("Location: login.php");
     exit;
 }
 
-$id_warga = $_COOKIE['user_id'];
+$id_user = (int)$_COOKIE['user_id'];
 $nama_warga = $_COOKIE['nama'];
 
-// Ambil data statistik dari database
-$q_total = $conn->query("SELECT COUNT(*) as total FROM surat WHERE id_warga = $id_warga")->fetch_assoc()['total'];
-$q_proses = $conn->query("SELECT COUNT(*) as proses FROM surat WHERE id_warga = $id_warga AND status = 'Diproses'")->fetch_assoc()['proses'];
-$q_kades = $conn->query("SELECT COUNT(*) as kades FROM surat WHERE id_warga = $id_warga AND status = 'Persetujuan Kades'")->fetch_assoc()['kades'];
-$q_setuju = $conn->query("SELECT COUNT(*) as setuju FROM surat WHERE id_warga = $id_warga AND status = 'Selesai'")->fetch_assoc()['setuju'];
+// [UPDATE PDM] Ambil data statistik dari tabel Pengajuan_Surat sesuai ENUM
+$q_total = $conn->query("SELECT COUNT(*) as total FROM Pengajuan_Surat WHERE id_user = $id_user")->fetch_assoc()['total'];
+$q_proses = $conn->query("SELECT COUNT(*) as proses FROM Pengajuan_Surat WHERE id_user = $id_user AND status = 'menunggu_verifikasi'")->fetch_assoc()['proses'];
+$q_kades = $conn->query("SELECT COUNT(*) as kades FROM Pengajuan_Surat WHERE id_user = $id_user AND status = 'menunggu_persetujuan'")->fetch_assoc()['kades'];
+$q_setuju = $conn->query("SELECT COUNT(*) as setuju FROM Pengajuan_Surat WHERE id_user = $id_user AND status IN ('disetujui', 'selesai')")->fetch_assoc()['setuju'];
 
-// Ambil 3 pengajuan terakhir
-$q_riwayat = $conn->query("SELECT * FROM surat WHERE id_warga = $id_warga ORDER BY id DESC LIMIT 3");
+// [UPDATE PDM] Ambil 3 pengajuan terakhir (JOIN dengan Jenis_Surat)
+$q_riwayat = $conn->query("
+    SELECT ps.*, js.nama_surat 
+    FROM Pengajuan_Surat ps
+    JOIN Jenis_Surat js ON ps.id_jenis = js.id_jenis
+    WHERE ps.id_user = $id_user 
+    ORDER BY ps.tanggal_pengajuan DESC LIMIT 3
+");
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -39,14 +45,14 @@ $q_riwayat = $conn->query("SELECT * FROM surat WHERE id_warga = $id_warga ORDER 
       </div>
       <nav class="sidebar-nav">
         <a href="dashboard.php" class="sidebar-link aktif">
-          <span class="sidebar-link-ikon">📊</span> Dashboard
+          <span class="sidebar-link-ikon">📊</span> Dashboard Saya
         </a>
         <div class="sidebar-label">Ajukan Surat <span class="sidebar-label-ikon">∧</span></div>
         <div class="sidebar-sub">
-          <a href="pengajuan.php?jenis=nikah" class="sidebar-link"><span class="sidebar-link-ikon">✉</span> Surat Pengantar Nikah</a>
-          <a href="pengajuan.php?jenis=usaha" class="sidebar-link"><span class="sidebar-link-ikon">✉</span> Surat Keterangan Usaha</a>
-          <a href="pengajuan.php?jenis=domisili" class="sidebar-link"><span class="sidebar-link-ikon">✉</span> Surat Keterangan Domisili</a>
-          <a href="pengajuan.php?jenis=lainnya" class="sidebar-link"><span class="sidebar-link-ikon">✉</span> Surat lorem ipsum</a>
+          <a href="pengajuan.php?id_jenis=1" class="sidebar-link"><span class="sidebar-link-ikon">✉</span> Surat Pengantar Nikah</a>
+          <a href="pengajuan.php?id_jenis=2" class="sidebar-link"><span class="sidebar-link-ikon">✉</span> Surat Keterangan Usaha</a>
+          <a href="pengajuan.php?id_jenis=3" class="sidebar-link"><span class="sidebar-link-ikon">✉</span> Surat Keterangan Domisili</a>
+          <a href="pengajuan.php?id_jenis=4" class="sidebar-link"><span class="sidebar-link-ikon">✉</span> Surat Lainnya</a>
         </div>
         <div class="sidebar-label">Informasi <span class="sidebar-label-ikon">∧</span></div>
         <div class="sidebar-sub">
@@ -64,10 +70,9 @@ $q_riwayat = $conn->query("SELECT * FROM surat WHERE id_warga = $id_warga ORDER 
           </button>
           <div class="header-pengguna">
             <h3>Halo, <?= htmlspecialchars($nama_warga) ?></h3>
-            <span>Warga</span>
+            <span>Warga Desa</span>
           </div>
         </div>
-        
         <div style="display:flex;align-items:center;gap:0.75rem;">
           <form action="logout.php" method="POST" style="margin: 0;">
             <button type="submit" class="avatar-pengguna" title="Keluar dari akun" aria-label="Logout" onclick="return confirm('Yakin ingin keluar?');" style="cursor: pointer;">👤</button>
@@ -96,7 +101,7 @@ $q_riwayat = $conn->query("SELECT * FROM surat WHERE id_warga = $id_warga ORDER 
           </div>
           <div class="kartu-statistik">
             <div class="statistik-angka"><?= $q_setuju ?> <span class="statistik-naik">↑</span></div>
-            <div class="statistik-label">Disetujui</div>
+            <div class="statistik-label">Selesai/Disetujui</div>
           </div>
         </div>
 
@@ -118,19 +123,24 @@ $q_riwayat = $conn->query("SELECT * FROM surat WHERE id_warga = $id_warga ORDER 
                 <?php if ($q_riwayat->num_rows > 0): ?>
                   <?php while($row = $q_riwayat->fetch_assoc()): ?>
                     <?php 
-                      $badge = 'badge-menunggu';
-                      if($row['status'] == 'Diproses' || $row['status'] == 'Persetujuan Kades') $badge = 'badge-verifikasi';
-                      if($row['status'] == 'Selesai') $badge = 'badge-disetujui';
-                      if($row['status'] == 'Ditolak') $badge = 'badge-ditolak';
+                      // Terjemahkan ENUM PDM
+                      $status_db = $row['status'];
+                      $badgeClass = 'badge-menunggu';
+                      $status_text = 'Menunggu Petugas';
+
+                      if ($status_db == 'menunggu_persetujuan') { $badgeClass = 'badge-verifikasi'; $status_text = 'Proses Kades'; }
+                      elseif ($status_db == 'disetujui') { $badgeClass = 'badge-verifikasi'; $status_text = 'Disetujui (Cetak)'; }
+                      elseif ($status_db == 'selesai') { $badgeClass = 'badge-disetujui'; $status_text = 'Selesai'; }
+                      elseif ($status_db == 'ditolak') { $badgeClass = 'badge-ditolak'; $status_text = 'Ditolak'; }
                     ?>
                     <tr>
-                      <td><?= htmlspecialchars($row['jenis_surat']) ?></td>
-                      <td><?= date('d M Y', strtotime($row['tanggal'])) ?></td>
-                      <td><span class="badge <?= $badge ?>"><?= $row['status'] ?></span></td>
+                      <td><?= htmlspecialchars($row['nama_surat']) ?></td>
+                      <td><?= date('d M Y', strtotime($row['tanggal_pengajuan'])) ?></td>
+                      <td><span class="badge <?= $badgeClass ?>"><?= $status_text ?></span></td>
                     </tr>
                   <?php endwhile; ?>
                 <?php else: ?>
-                    <tr><td colspan="3" style="text-align: center;">Belum ada pengajuan.</td></tr>
+                    <tr><td colspan="3" style="text-align: center; padding:20px;">Belum ada pengajuan.</td></tr>
                 <?php endif; ?>
               </tbody>
             </table>
@@ -143,7 +153,7 @@ $q_riwayat = $conn->query("SELECT * FROM surat WHERE id_warga = $id_warga ORDER 
             </div>
             <div class="item-notifikasi">
               <span class="notif-titik notif-biru"></span>
-              Sistem telah terhubung ke database TiDB Cloud.
+              Sistem telah diperbarui ke struktur PDM Relasional.
             </div>
           </div>
         </div>
