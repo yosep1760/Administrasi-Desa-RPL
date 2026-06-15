@@ -9,33 +9,33 @@ if (!isset($_COOKIE['user_id']) || $_COOKIE['role'] != 'petugas') {
 
 $nama_petugas = $_COOKIE['nama'];
 
-// Logika Petugas: Meneruskan ke Kades
+// LOGIKA 1: Tombol Terima / Teruskan (Sesuai Diagram: Set status = Menunggu Approval Kepala desa)
 if (isset($_GET['teruskan_id'])) {
     $id_surat = (int)$_GET['teruskan_id'];
-    // Ubah status menjadi butuh persetujuan Kades
-    $conn->query("UPDATE surat SET status='Persetujuan Kades' WHERE id=$id_surat");
+    
+    $conn->query("UPDATE surat SET status='Menunggu Approval Kepala desa' WHERE id=$id_surat");
     header("Location: petugas-masuk.php");
     exit;
 }
 
-// Logika Petugas: Menolak Surat DENGAN ALASAN (Fitur Extend Diagram)
-if (isset($_GET['tolak_id']) && isset($_GET['alasan'])) {
+// LOGIKA 2: Tombol Tolak (Sesuai Diagram: Set status = Perlu Perbaikan & Menyimpan catatan perbaikan)
+if (isset($_GET['tolak_id']) && isset($_GET['catatan'])) {
     $id_surat = (int)$_GET['tolak_id'];
-    $alasan = $conn->real_escape_string($_GET['alasan']);
+    $catatan = $conn->real_escape_string($_GET['catatan']);
     
-    // Trik Cerdas: Gabungkan alasan penolakan ke dalam keterangan agar warga bisa membacanya
-    $conn->query("UPDATE surat SET status='Ditolak', keterangan = CONCAT(keterangan, ' | ❌ ALASAN DITOLAK: ', '$alasan') WHERE id=$id_surat");
+    // Gabungkan catatan perbaikan ke kolom keterangan agar terbaca di riwayat warga
+    $conn->query("UPDATE surat SET status='Perlu Perbaikan', keterangan = CONCAT(keterangan, ' | ⚠️ CATATAN PERBAIKAN: ', '$catatan') WHERE id=$id_surat");
     
     header("Location: petugas-masuk.php");
     exit;
 }
 
-// Ambil HANYA pengajuan yang baru masuk (Menunggu)
+// Ambil data surat yang statusnya "Menunggu Verifikasi Petugas"
 $query = "SELECT surat.*, pengguna.nama AS nama_warga 
           FROM surat 
           JOIN pengguna ON surat.id_warga = pengguna.id 
-          WHERE surat.status = 'Menunggu'
-          ORDER BY surat.tanggal ASC"; // Yang paling lama mengantre di atas
+          WHERE surat.status = 'Menunggu Verifikasi Petugas'
+          ORDER BY surat.tanggal ASC"; 
 $data_surat = $conn->query($query);
 ?>
 <!DOCTYPE html>
@@ -108,7 +108,7 @@ $data_surat = $conn->query($query);
                 <th>Pemohon (Warga)</th>
                 <th>Jenis Surat</th>
                 <th>Keterangan</th>
-                <th style="text-align:center;">Verifikasi</th>
+                <th style="text-align:center;">Verifikasi data</th>
               </tr>
             </thead>
             <tbody>
@@ -121,15 +121,15 @@ $data_surat = $conn->query($query);
                       <td><?= htmlspecialchars($row['jenis_surat']) ?></td>
                       <td><?= htmlspecialchars($row['keterangan']) ?></td>
                       <td style="display:flex; gap:0.5rem; justify-content:center;">
-                          <a href="?teruskan_id=<?= $row['id'] ?>" class="btn-primer btn-kecil" style="background:#3b82f6; border:none; text-decoration:none;" onclick="return confirm('Berkas lengkap? Teruskan ke Kepala Desa?');">➡️ Teruskan</a>
+                          <a href="?teruskan_id=<?= $row['id'] ?>" class="btn-primer btn-kecil" style="background:#22c55e; border:none; text-decoration:none;" onclick="return confirm('Data valid? Tekan OK untuk meneruskan ke Kepala Desa.');">✔ Terima</a>
                           
-                          <button onclick="tolakSurat(<?= $row['id'] ?>)" class="btn-sekunder btn-kecil" style="color:#ef4444; border-color:#ef4444; text-decoration:none; cursor:pointer;">✖ Tolak</button>
+                          <button onclick="tolakDenganCatatan(<?= $row['id'] ?>)" class="btn-sekunder btn-kecil" style="color:#ef4444; border-color:#ef4444; cursor:pointer;">✖ Tolak</button>
                       </td>
                     </tr>
                   <?php endwhile; ?>
               <?php else: ?>
                   <tr>
-                    <td colspan="6" style="text-align:center; padding: 20px;">Antrean kosong. Belum ada surat baru dari warga.</td>
+                    <td colspan="6" style="text-align:center; padding: 20px;">Antrean kosong. Belum ada surat baru dengan status Menunggu Verifikasi Petugas.</td>
                   </tr>
               <?php endif; ?>
             </tbody>
@@ -142,19 +142,14 @@ $data_surat = $conn->query($query);
   <script src="../js/main.js"></script>
   
   <script>
-    function tolakSurat(idSurat) {
-        // Memunculkan kotak input (prompt)
-        let alasan = prompt("Masukkan alasan MENGAPA surat ini ditolak (wajib diisi):");
+    function tolakDenganCatatan(idSurat) {
+        let catatan = prompt("Menambahkan catatan perbaikan untuk warga (wajib diisi):");
         
-        // Jika petugas menekan OK dan isinya tidak kosong
-        if (alasan != null && alasan.trim() !== "") {
-            // Arahkan ke URL PHP dengan mengirim ID dan Alasannya
-            window.location.href = "?tolak_id=" + idSurat + "&alasan=" + encodeURIComponent(alasan);
-        } else if (alasan != null) {
-            // Jika menekan OK tapi tidak mengetik apa-apa
-            alert("Proses dibatalkan! Alasan penolakan WAJIB diisi.");
+        if (catatan != null && catatan.trim() !== "") {
+            window.location.href = "?tolak_id=" + idSurat + "&catatan=" + encodeURIComponent(catatan);
+        } else if (catatan != null) {
+            alert("Gagal! Catatan perbaikan tidak boleh kosong.");
         }
-        // Jika petugas menekan tombol 'Cancel', tidak terjadi apa-apa
     }
   </script>
 </body>

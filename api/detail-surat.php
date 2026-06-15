@@ -1,7 +1,7 @@
 <?php
 require 'koneksi.php';
 
-// Lindungi halaman (Gunakan COOKIE)
+// Lindungi halaman dengan COOKIE
 if (!isset($_COOKIE['user_id'])) {
     header("Location: login.php");
     exit;
@@ -9,7 +9,7 @@ if (!isset($_COOKIE['user_id'])) {
 
 $id_user = $_COOKIE['user_id'];
 $nama_user = $_COOKIE['nama'];
-$role_user = $_COOKIE['role']; // Ambil role dari cookie
+$role_user = $_COOKIE['role'];
 
 // Cek apakah ada ID surat di URL
 if (!isset($_GET['id'])) {
@@ -19,8 +19,8 @@ if (!isset($_GET['id'])) {
 
 $id_surat = (int)$_GET['id'];
 
-// Ambil data surat beserta nama pemohonnya
-$query = $conn->query("SELECT surat.*, pengguna.nama AS nama_pemohon 
+// Ambil data surat beserta detail pemohonnya
+$query = $conn->query("SELECT surat.*, pengguna.nama AS nama_pemohon, pengguna.nik AS nik_pemohon 
                        FROM surat 
                        JOIN pengguna ON surat.id_warga = pengguna.id 
                        WHERE surat.id = $id_surat");
@@ -32,25 +32,47 @@ if ($query->num_rows == 0) {
 
 $data = $query->fetch_assoc();
 
-// Keamanan Tambahan: Pastikan Warga HANYA bisa melihat surat miliknya sendiri
+// Keamanan: Warga hanya bisa melihat surat miliknya sendiri
 if ($role_user == 'warga' && $data['id_warga'] != $id_user) {
     echo "<script>alert('Akses Ditolak! Ini bukan surat Anda.'); window.location.href='riwayat.php';</script>";
     exit;
 }
 
-// Logika Badge Status
+// Pewarnaan Badge Status
 $badgeClass = 'badge-menunggu';
-if($data['status'] == 'Diproses' || $data['status'] == 'Persetujuan Kades') $badgeClass = 'badge-verifikasi';
+if($data['status'] == 'Perlu Perbaikan' || $data['status'] == 'Ditolak') $badgeClass = 'badge-ditolak';
+if($data['status'] == 'Menunggu Approval Kepala desa' || $data['status'] == 'Disetujui') $badgeClass = 'badge-verifikasi';
 if($data['status'] == 'Selesai') $badgeClass = 'badge-disetujui';
-if($data['status'] == 'Ditolak') $badgeClass = 'badge-ditolak';
+
+// TRIK CERDAS: Memisahkan Keterangan Asli dan Catatan Penolakan/Perbaikan
+$keterangan_asli = $data['keterangan'];
+$catatan_sistem = "";
+
+// Jika ada tanda '|' di dalam teks, berarti ada catatan dari sistem/petugas
+if (strpos($keterangan_asli, '|') !== false) {
+    $pecah = explode('|', $keterangan_asli);
+    $keterangan_asli = trim($pecah[0]); // Bagian pertama adalah keterangan asli warga
+    
+    // Gabungkan sisanya menjadi catatan sistem
+    unset($pecah[0]);
+    $catatan_sistem = implode('<br>', array_map('trim', $pecah));
+}
 ?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Detail Surat - NamaWeb</title>
+  <title>Detail Pengajuan - NamaWeb</title>
   <link rel="stylesheet" href="../css/style.css" />
+  <style>
+      .tabel-detail { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+      .tabel-detail th, .tabel-detail td { padding: 12px 15px; border-bottom: 1px solid #e2e8f0; text-align: left; }
+      .tabel-detail th { width: 30%; color: #64748b; font-weight: 600; background-color: #f8fafc; }
+      .alert-catatan { background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 15px; margin-top: 20px; border-radius: 4px; }
+      .alert-catatan h4 { color: #b91c1c; margin-bottom: 5px; font-size: 1rem; }
+      .alert-catatan p { color: #7f1d1d; font-size: 0.95rem; line-height: 1.5; }
+  </style>
 </head>
 <body>
 
@@ -89,104 +111,62 @@ if($data['status'] == 'Ditolak') $badgeClass = 'badge-ditolak';
           </button>
           <div class="header-pengguna">
             <h3>Halo, <?= htmlspecialchars($nama_user) ?></h3>
-            <span style="text-transform: capitalize;"><?= htmlspecialchars($_SESSION['role']) ?></span>
+            <span>Warga</span>
           </div>
         </div>
         <form action="logout.php" method="POST" style="margin: 0;">
-            <button type="submit" class="avatar-pengguna" title="Keluar dari akun" aria-label="Logout" onclick="return confirm('Yakin ingin keluar?');" style="cursor: pointer;">👤</button>
+            <button type="submit" class="avatar-pengguna" title="Keluar" onclick="return confirm('Yakin ingin keluar?');" style="cursor:pointer;">👤</button>
         </form>
       </header>
 
       <main class="area-konten">
-        <h1 style="font-family:var(--font-judul);font-size:1.5rem;font-weight:700;margin-bottom:0.25rem;">Detail Surat</h1>
-        <button class="tombol-kembali" onclick="window.history.back()">
-          ← Kembali
-        </button>
-
-        <div class="grid-detail">
-          <div class="detail-panel-kiri">
-            <div class="kartu-detail">
-              <h3><?= htmlspecialchars($data['jenis_surat']) ?></h3>
-              <p class="nomor-pengajuan">Nomor Pengajuan: PS - <?= sprintf("%05d", $data['id']) ?></p>
-
-              <dl>
-                <div class="baris-detail">
-                  <dt>Jenis Surat:</dt>
-                  <dd><?= htmlspecialchars($data['jenis_surat']) ?></dd>
-                </div>
-                <div class="baris-detail">
-                  <dt>Nama Pemohon:</dt>
-                  <dd><?= htmlspecialchars($data['nama_pemohon']) ?></dd>
-                </div>
-                <div class="baris-detail">
-                  <dt>NIK:</dt>
-                  <dd><?= htmlspecialchars($data['nik']) ?></dd>
-                </div>
-                <div class="baris-detail">
-                  <dt>Tanggal Pengajuan:</dt>
-                  <dd><?= date('d F Y, H:i', strtotime($data['tanggal'])) ?></dd>
-                </div>
-                <div class="baris-detail">
-                  <dt>Status:</dt>
-                  <dd>
-                    <span class="badge <?= $badgeClass ?>"><?= $data['status'] ?></span>
-                  </dd>
-                </div>
-                <div class="baris-detail">
-                  <dt>Keterangan Tambahan:</dt>
-                  <dd><?= htmlspecialchars($data['keterangan']) ?></dd>
-                </div>
-              </dl>
-            </div>
-
-            <div class="kartu-detail">
-              <h3 style="font-size:1rem;margin-bottom:1rem;">Dokumen Pendukung</h3>
-              <div class="item-dokumen">
-                <div class="item-dokumen-info">
-                  <span class="ikon-pdf">📄</span> Dokumen tersimpan di sistem aman.
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="detail-panel-kanan">
-            <div class="panel-notifikasi">
-              <div class="panel-notifikasi-header">
-                <h3>Pemberitahuan Status</h3>
-              </div>
-
-              <?php if($data['status'] == 'Menunggu'): ?>
-                <div class="item-notifikasi">
-                  <span class="notif-titik notif-biru"></span>
-                  Pengajuan Anda telah diterima sistem dan sedang menunggu verifikasi petugas.
-                </div>
-              <?php elseif($data['status'] == 'Diproses'): ?>
-                <div class="item-notifikasi">
-                  <span class="notif-titik notif-biru"></span>
-                  Dokumen Anda sedang <strong>diverifikasi</strong> oleh Petugas Desa.
-                </div>
-              <?php elseif($data['status'] == 'Persetujuan Kades'): ?>
-                <div class="item-notifikasi">
-                  <span class="notif-titik notif-biru"></span>
-                  Surat telah diverifikasi petugas dan sedang menunggu <strong>Persetujuan Kepala Desa</strong>.
-                </div>
-              <?php elseif($data['status'] == 'Selesai'): ?>
-                <div class="item-notifikasi">
-                  <span class="notif-titik notif-hijau"></span>
-                  Surat Anda telah <strong>Disetujui</strong> dan selesai diproses! 
-                </div>
-                <button class="btn-primer" style="width:100%; margin-top:1rem;" onclick="window.print()">Cetak Surat</button>
-              <?php elseif($data['status'] == 'Ditolak'): ?>
-                <div class="item-notifikasi">
-                  <span class="notif-titik notif-merah"></span>
-                  Mohon maaf, pengajuan surat Anda <strong>Ditolak</strong> karena data tidak valid atau dokumen kurang lengkap.
-                </div>
-              <?php endif; ?>
-
-            </div>
-          </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+          <h1 style="font-family:var(--font-judul);font-size:1.5rem;font-weight:700;">Detail Pengajuan Surat</h1>
+          <a href="riwayat.php" class="btn-sekunder btn-kecil" style="text-decoration:none;">← Kembali ke Riwayat</a>
         </div>
 
+        <div class="kartu-form">
+          <h3 style="font-size:1.1rem; font-weight:700; border-bottom:1px solid #e2e8f0; padding-bottom:10px;">Informasi Dokumen</h3>
+          
+          <table class="tabel-detail">
+            <tr>
+              <th>Nomor Registrasi</th>
+              <td>#SRT-<?= str_pad($data['id'], 5, '0', STR_PAD_LEFT) ?></td>
+            </tr>
+            <tr>
+              <th>Tanggal Pengajuan</th>
+              <td><?= date('d M Y, H:i', strtotime($data['tanggal'])) ?> WIB</td>
+            </tr>
+            <tr>
+              <th>Nama Pemohon</th>
+              <td><strong><?= htmlspecialchars($data['nama_pemohon']) ?></strong></td>
+            </tr>
+            <tr>
+              <th>NIK Pemohon</th>
+              <td><?= htmlspecialchars($data['nik']) ?></td>
+            </tr>
+            <tr>
+              <th>Jenis Surat</th>
+              <td><?= htmlspecialchars($data['jenis_surat']) ?></td>
+            </tr>
+            <tr>
+              <th>Keperluan Awal</th>
+              <td><?= htmlspecialchars($keterangan_asli) ?></td>
+            </tr>
+            <tr>
+              <th>Status Verifikasi</th>
+              <td><span class="badge <?= $badgeClass ?>" style="font-size:0.9rem; padding:5px 10px;"><?= $data['status'] ?></span></td>
+            </tr>
+          </table>
+
+          <?php if (!empty($catatan_sistem)): ?>
+          <div class="alert-catatan">
+            <h4>Pemberitahuan Sistem / Catatan Petugas:</h4>
+            <p><?= $catatan_sistem ?></p>
+          </div>
+          <?php endif; ?>
+
+        </div>
       </main>
     </div>
   </div>

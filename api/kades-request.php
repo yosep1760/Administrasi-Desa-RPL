@@ -9,31 +9,33 @@ if (!isset($_COOKIE['user_id']) || $_COOKIE['role'] != 'kades') {
 
 $nama_kades = $_COOKIE['nama'];
 
-// Logika Kades: Menyetujui surat
+// LOGIKA 1: Menekan tombol Setujui (Sesuai Diagram: Set status = Disetujui)
 if (isset($_GET['approve_id'])) {
     $id_surat = (int)$_GET['approve_id'];
-    $conn->query("UPDATE surat SET status='Selesai' WHERE id=$id_surat");
+    
+    // Status diubah menjadi "Disetujui" agar masuk ke antrean Upload Petugas
+    $conn->query("UPDATE surat SET status='Disetujui' WHERE id=$id_surat");
     header("Location: kades-request.php");
     exit;
 }
 
-// Logika Kades: Menolak Surat DENGAN ALASAN (Fitur Extend Diagram)
+// LOGIKA 2: Menekan tombol Tolak (Sesuai Diagram: Menambahkan Alasan penolakan & Set status = Ditolak)
 if (isset($_GET['reject_id']) && isset($_GET['alasan'])) {
     $id_surat = (int)$_GET['reject_id'];
     $alasan = $conn->real_escape_string($_GET['alasan']);
     
-    // Trik Cerdas: Gabungkan alasan penolakan Kades ke dalam keterangan
-    $conn->query("UPDATE surat SET status='Ditolak', keterangan = CONCAT(keterangan, ' | ❌ DITOLAK KADES: ', '$alasan') WHERE id=$id_surat");
+    // Menyimpan alasan penolakan dan mengubah status menjadi Ditolak
+    $conn->query("UPDATE surat SET status='Ditolak', keterangan = CONCAT(keterangan, ' | ❌ ALASAN PENOLAKAN KADES: ', '$alasan') WHERE id=$id_surat");
     
     header("Location: kades-request.php");
     exit;
 }
 
-// Ambil HANYA pengajuan yang butuh persetujuan Kades
+// Ambil HANYA pengajuan yang statusnya "Menunggu Approval Kepala desa"
 $query = "SELECT surat.*, pengguna.nama AS nama_warga 
           FROM surat 
           JOIN pengguna ON surat.id_warga = pengguna.id 
-          WHERE surat.status = 'Persetujuan Kades'
+          WHERE surat.status = 'Menunggu Approval Kepala desa'
           ORDER BY surat.tanggal ASC"; 
 $data_surat = $conn->query($query);
 ?>
@@ -42,7 +44,7 @@ $data_surat = $conn->query($query);
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Request Surat - NamaWeb</title>
+  <title>Approval Surat - NamaWeb</title>
   <link rel="stylesheet" href="../css/style.css" />
 </head>
 <body>
@@ -62,7 +64,7 @@ $data_surat = $conn->query($query);
         </div>
         <div class="sidebar-label">Layanan <span class="sidebar-label-ikon">∧</span></div>
         <div class="sidebar-sub">
-          <a href="kades-request.php" class="sidebar-link aktif"><span class="sidebar-link-ikon">📩</span>Request Surat</a>
+          <a href="kades-request.php" class="sidebar-link aktif"><span class="sidebar-link-ikon">📩</span>Request Approval</a>
           <a href="kades-disetujui.php" class="sidebar-link"><span class="sidebar-link-ikon">✅</span>Surat Disetujui</a>
           <a href="kades-ditolak.php" class="sidebar-link"><span class="sidebar-link-ikon">❌</span>Surat Ditolak</a>
         </div>
@@ -91,7 +93,7 @@ $data_surat = $conn->query($query);
 
       <main class="area-konten">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
-          <h1 style="font-family:var(--font-judul);font-size:1.5rem;font-weight:700;">Antrean Request Surat</h1>
+          <h1 style="font-family:var(--font-judul);font-size:1.5rem;font-weight:700;">Daftar Approval Surat</h1>
         </div>
 
         <div class="kartu-tabel">
@@ -103,7 +105,7 @@ $data_surat = $conn->query($query);
                 <th>Pemohon (Warga)</th>
                 <th>Jenis Surat</th>
                 <th>Keterangan</th>
-                <th style="text-align:center;">Aksi</th>
+                <th style="text-align:center;">Review Pengajuan</th>
               </tr>
             </thead>
             <tbody>
@@ -116,15 +118,17 @@ $data_surat = $conn->query($query);
                       <td><?= htmlspecialchars($row['jenis_surat']) ?></td>
                       <td><?= htmlspecialchars($row['keterangan']) ?></td>
                       <td style="display:flex; gap:0.5rem; justify-content:center;">
-                          <a href="?approve_id=<?= $row['id'] ?>" class="btn-primer btn-kecil" style="background:#22c55e; border:none; text-decoration:none;" onclick="return confirm('Yakin ingin menyetujui surat ini?');">✔ Setujui</a>
+                          <!-- Tombol Setujui -->
+                          <a href="?approve_id=<?= $row['id'] ?>" class="btn-primer btn-kecil" style="background:#22c55e; border:none; text-decoration:none;" onclick="return confirm('Menyetujui surat ini untuk di-upload oleh petugas?');">✔ Setujui</a>
                           
-                          <button onclick="tolakSuratKades(<?= $row['id'] ?>)" class="btn-sekunder btn-kecil" style="color:#ef4444; border-color:#ef4444; text-decoration:none; cursor:pointer;">✖ Tolak</button>
+                          <!-- Tombol Tolak memanggil Javascript -->
+                          <button onclick="tolakSuratKades(<?= $row['id'] ?>)" class="btn-sekunder btn-kecil" style="color:#ef4444; border-color:#ef4444; cursor:pointer;">✖ Tolak</button>
                       </td>
                     </tr>
                   <?php endwhile; ?>
               <?php else: ?>
                   <tr>
-                    <td colspan="6" style="text-align:center; padding: 20px;">Belum ada surat yang memerlukan persetujuan saat ini.</td>
+                    <td colspan="6" style="text-align:center; padding: 20px;">Belum ada surat di daftar approval.</td>
                   </tr>
               <?php endif; ?>
             </tbody>
@@ -137,14 +141,15 @@ $data_surat = $conn->query($query);
 
   <script src="../js/main.js"></script>
   
+  <!-- SCRIPT UNTUK POP-UP ALASAN PENOLAKAN KADES -->
   <script>
     function tolakSuratKades(idSurat) {
-        let alasan = prompt("Masukkan alasan Bapak/Ibu Kepala Desa menolak surat ini (wajib diisi):");
+        let alasan = prompt("Menambahkan Alasan penolakan (wajib diisi):");
         
         if (alasan != null && alasan.trim() !== "") {
             window.location.href = "?reject_id=" + idSurat + "&alasan=" + encodeURIComponent(alasan);
         } else if (alasan != null) {
-            alert("Proses dibatalkan! Alasan penolakan WAJIB diisi.");
+            alert("Proses dibatalkan! Alasan penolakan tidak boleh kosong.");
         }
     }
   </script>

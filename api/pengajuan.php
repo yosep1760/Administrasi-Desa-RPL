@@ -11,7 +11,7 @@ $id_warga = $_COOKIE['user_id'];
 $nama_warga = $_COOKIE['nama'];
 $pesan = "";
 
-// 1. TANGKAP PARAMETER DARI URL (Contoh: pengajuan.php?jenis=nikah)
+// 1. TANGKAP PARAMETER DARI URL
 $jenis_param = isset($_GET['jenis']) ? $_GET['jenis'] : 'usaha'; // Default ke usaha
 
 // 2. TENTUKAN JUDUL OTOMATIS BERDASARKAN URL
@@ -21,22 +21,38 @@ if ($jenis_param == 'nikah') {
 } elseif ($jenis_param == 'domisili') {
     $judul_surat = "Surat Keterangan Domisili";
 } elseif ($jenis_param == 'lainnya') {
-    $judul_surat = "Surat Lainnya (Lorem Ipsum)";
+    $judul_surat = "Surat Lainnya";
 }
 
-// Jika form disubmit
+// 3. LOGIKA SUBMIT SESUAI ACTIVITY DIAGRAM GAMBAR 1
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $nik = $conn->real_escape_string($_POST['nik']);
     $jenis_surat = $conn->real_escape_string($_POST['jenis_surat']);
     $keterangan = $conn->real_escape_string($_POST['keterangan']);
 
-    // Simpan ke database
-    $query = "INSERT INTO surat (id_warga, nik, jenis_surat, keterangan) VALUES ($id_warga, '$nik', '$jenis_surat', '$keterangan')";
-    
-    if ($conn->query($query) === TRUE) {
-        $pesan = "<div style='background: #dcfce7; color: #16a34a; padding: 12px; border-radius: 6px; margin-bottom: 20px; border: 1px solid #bbf7d0;'><strong>Berhasil!</strong> Pengajuan $jenis_surat telah dikirim. Silakan cek menu Riwayat.</div>";
+    // Cek Data Valid (Validasi Sederhana)
+    if(strlen($nik) == 16) {
+        // [ROMBAK] Set status awal menjadi "Menunggu Verifikasi Petugas" (Sesuai Diagram)
+        $status_awal = "Menunggu Verifikasi Petugas";
+        
+        // Simpan ke database beserta status barunya
+        $query = "INSERT INTO surat (id_warga, nik, jenis_surat, keterangan, status) 
+                  VALUES ($id_warga, '$nik', '$jenis_surat', '$keterangan', '$status_awal')";
+        
+        if ($conn->query($query) === TRUE) {
+            $pesan = "<div style='background: #dcfce7; color: #16a34a; padding: 12px; border-radius: 6px; margin-bottom: 20px; border: 1px solid #bbf7d0;'>
+                        <strong>Pengajuan Berhasil!</strong> Surat $jenis_surat Anda telah dikirim dan masuk ke antrean verifikasi petugas.
+                      </div>";
+        } else {
+            $pesan = "<div style='background: #fee2e2; color: #dc2626; padding: 12px; border-radius: 6px; margin-bottom: 20px; border: 1px solid #fecaca;'>
+                        <strong>Menampilkan pesan error:</strong> Gagal menyimpan data ke database. " . $conn->error . "
+                      </div>";
+        }
     } else {
-        $pesan = "<div style='background: #fee2e2; color: #dc2626; padding: 12px; border-radius: 6px; margin-bottom: 20px; border: 1px solid #fecaca;'><strong>Gagal!</strong> Error: " . $conn->error . "</div>";
+        // Jika data NIK tidak 16 digit (Data tidak valid)
+        $pesan = "<div style='background: #fee2e2; color: #dc2626; padding: 12px; border-radius: 6px; margin-bottom: 20px; border: 1px solid #fecaca;'>
+                    <strong>Data tidak valid!</strong> NIK harus terdiri dari 16 digit angka.
+                  </div>";
     }
 }
 ?>
