@@ -168,7 +168,9 @@ if ($status_db == 'menunggu_persetujuan') {
               <td>
                   <?php if($query_dokumen->num_rows > 0): ?>
                       <?php while($doc = $query_dokumen->fetch_assoc()): ?>
-                          <span class="badge-dokumen">📎 <?= htmlspecialchars($doc['jenis_dokumen']) ?> : <?= htmlspecialchars($doc['nama_file']) ?></span><br>
+                          <a href="<?= htmlspecialchars($doc['file_dokumen']) ?>" target="_blank" class="badge-dokumen" style="text-decoration:none; display:inline-block; margin-bottom:5px;">
+                           📎 <?= htmlspecialchars($doc['jenis_dokumen']) ?> : <?= htmlspecialchars($doc['nama_file']) ?> (Lihat)
+                          </a><br>
                       <?php endwhile; ?>
                   <?php else: ?>
                       <span style="color:#94a3b8; font-style:italic;">Tidak ada lampiran dokumen</span>
