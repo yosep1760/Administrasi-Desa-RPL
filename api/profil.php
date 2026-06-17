@@ -27,62 +27,7 @@ $huruf_awal = strtoupper(substr($user['nama_lengkap'], 0, 1));
 <body>
 
   <div class="layout-dashboard">
-    <div id="overlaySidebar" class="overlay-sidebar"></div>
-
-    <aside id="sidebar" class="sidebar">
-      <div class="sidebar-header">*Logo + NamaWeb</div>
-      <div class="sidebar-cari">
-        <input type="search" class="input-cari" placeholder="Search" />
-      </div>
-      
-      <nav class="sidebar-nav">
-        
-        <?php if ($user['role'] == 'warga'): ?>
-            <a href="dashboard.php" class="sidebar-link">
-              <span class="sidebar-link-ikon">📊</span>Dashboard
-            </a>
-            <div class="sidebar-label">Ajukan Surat <span class="sidebar-label-ikon">∧</span></div>
-            <div class="sidebar-sub">
-              <a href="pengajuan.php?id_jenis=1" class="sidebar-link"><span class="sidebar-link-ikon">✉</span>Surat Pengantar Nikah</a>
-              <a href="pengajuan.php?id_jenis=2" class="sidebar-link"><span class="sidebar-link-ikon">✉</span>Surat Keterangan Usaha</a>
-              <a href="pengajuan.php?id_jenis=3" class="sidebar-link"><span class="sidebar-link-ikon">✉</span>Surat Keterangan Domisili</a>
-              <a href="pengajuan.php?id_jenis=4" class="sidebar-link"><span class="sidebar-link-ikon">✉</span>Surat Lainnya</a>
-            </div>
-            <div class="sidebar-label">Informasi <span class="sidebar-label-ikon">∧</span></div>
-            <div class="sidebar-sub">
-              <a href="riwayat.php" class="sidebar-link"><span class="sidebar-link-ikon">🕐</span>Riwayat Pengajuan</a>
-              <a href="profil.php" class="sidebar-link aktif"><span class="sidebar-link-ikon">👤</span>Profil Saya</a>
-            </div>
-
-        <?php elseif ($user['role'] == 'petugas'): ?>
-            <a href="dashboard-petugas.php" class="sidebar-link">
-              <span class="sidebar-link-ikon">🏠</span>Dashboard Petugas
-            </a>
-            <div class="sidebar-label">Pengaturan <span class="sidebar-label-ikon">∧</span></div>
-            <div class="sidebar-sub">
-              <a href="profil.php" class="sidebar-link aktif"><span class="sidebar-link-ikon">👤</span>Profil Saya</a>
-            </div>
-
-        <?php elseif ($user['role'] == 'kepala_desa'): ?>
-            <div class="sidebar-label">Dashboard <span class="sidebar-label-ikon">∧</span></div>
-            <div class="sidebar-sub">
-              <a href="dashboard-kades.php" class="sidebar-link"><span class="sidebar-link-ikon">🏠</span>Home</a>
-            </div>
-            <div class="sidebar-label">Layanan <span class="sidebar-label-ikon">∧</span></div>
-            <div class="sidebar-sub">
-              <a href="kades-request.php" class="sidebar-link"><span class="sidebar-link-ikon">📩</span>Request Surat</a>
-              <a href="kades-disetujui.php" class="sidebar-link"><span class="sidebar-link-ikon">✅</span>Surat Disetujui</a>
-              <a href="kades-ditolak.php" class="sidebar-link"><span class="sidebar-link-ikon">❌</span>Surat Ditolak</a>
-            </div>
-            <div class="sidebar-label">Pengaturan <span class="sidebar-label-ikon">∧</span></div>
-            <div class="sidebar-sub">
-              <a href="profil.php" class="sidebar-link aktif"><span class="sidebar-link-ikon">👤</span>Profil Saya</a>
-            </div>
-        <?php endif; ?>
-
-      </nav>
-    </aside>
-
+    <?php include 'sidebar.php'; ?>
     <div class="konten-dashboard">
       <header class="header-dashboard">
         <div style="display:flex;align-items:center;gap:0.75rem;">

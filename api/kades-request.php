@@ -1,6 +1,9 @@
 <?php
 require 'koneksi.php';
 
+// Panggil helper email
+require_once 'kirim_email.php';
+
 // Lindungi halaman: Pastikan yang login HANYA KADES
 if (!isset($_COOKIE['user_id']) || $_COOKIE['role'] != 'kepala_desa') {
     header("Location: login.php");
@@ -9,17 +12,33 @@ if (!isset($_COOKIE['user_id']) || $_COOKIE['role'] != 'kepala_desa') {
 
 $nama_kades = $_COOKIE['nama'];
 
-// LOGIKA 1: Menekan tombol Setujui (Ubah status ke 'disetujui' sesuai ENUM PDM)
+// ==========================================
+// LOGIKA 1: KADES MENYETUJUI SURAT
+// ==========================================
 if (isset($_GET['approve_id'])) {
     $id_pengajuan = (int)$_GET['approve_id'];
     
     // Status diubah menjadi "disetujui" agar masuk ke antrean Upload Petugas
     $conn->query("UPDATE Pengajuan_Surat SET status='disetujui' WHERE id_pengajuan=$id_pengajuan");
+    
+    // Cari email pemohon (Warga) untuk dikabari
+    $q_warga = $conn->query("SELECT u.email, u.nama_lengkap FROM Pengajuan_Surat ps JOIN Users u ON ps.id_user = u.id_user WHERE ps.id_pengajuan = $id_pengajuan");
+    if($q_warga->num_rows > 0) {
+        $warga = $q_warga->fetch_assoc();
+        $pesan_warga = "<h3>Selamat {$warga['nama_lengkap']}!</h3>
+                        <p>Surat pengajuan Anda telah <b>DISETUJUI</b> dan ditandatangani digital oleh Kepala Desa Kosar.</p>
+                        <p>Saat ini surat sedang dalam tahap penerbitan PDF oleh Petugas. Silakan cek menu Riwayat secara berkala.</p>
+                        <br><p>Salam,<br>Pemerintah Desa Kosar</p>";
+        kirimEmail($warga['email'], "Surat Anda Disetujui! - Desa Kosar", $pesan_warga);
+    }
+
     header("Location: kades-request.php");
     exit;
 }
 
-// LOGIKA 2: Menekan tombol Tolak (Ubah status & isi kolom catatan_kades PDM)
+// ==========================================
+// LOGIKA 2: KADES MENOLAK SURAT
+// ==========================================
 if (isset($_GET['reject_id']) && isset($_GET['alasan'])) {
     $id_pengajuan = (int)$_GET['reject_id'];
     $alasan = $conn->real_escape_string($_GET['alasan']);
@@ -27,11 +46,23 @@ if (isset($_GET['reject_id']) && isset($_GET['alasan'])) {
     // Menyimpan alasan penolakan dan mengubah status menjadi 'ditolak'
     $conn->query("UPDATE Pengajuan_Surat SET status='ditolak', catatan_kades='$alasan' WHERE id_pengajuan=$id_pengajuan");
     
+    // Kirim email penolakan ke Warga
+    $q_warga = $conn->query("SELECT u.email, u.nama_lengkap FROM Pengajuan_Surat ps JOIN Users u ON ps.id_user = u.id_user WHERE ps.id_pengajuan = $id_pengajuan");
+    if($q_warga->num_rows > 0) {
+        $warga = $q_warga->fetch_assoc();
+        $pesan_warga = "<h3>Mohon Maaf {$warga['nama_lengkap']},</h3>
+                        <p>Surat pengajuan Anda <b>DITOLAK</b> oleh Kepala Desa Kosar dengan alasan berikut:</p>
+                        <p style='background:#fee2e2; color:#991b1b; padding:10px; border-left:4px solid #ef4444;'><i>\"$alasan\"</i></p>
+                        <p>Silakan ajukan ulang dengan memperbaiki data sesuai catatan di atas.</p>
+                        <br><p>Salam,<br>Pemerintah Desa Kosar</p>";
+        kirimEmail($warga['email'], "Status Pengajuan Ditolak - Desa Kosar", $pesan_warga);
+    }
+    
     header("Location: kades-request.php");
     exit;
 }
 
-// [UPDATE PDM] Ambil pengajuan yang statusnya "menunggu_persetujuan"
+// Ambil pengajuan yang statusnya "menunggu_persetujuan"
 $query = "
     SELECT ps.*, u.nama_lengkap AS nama_warga, js.nama_surat 
     FROM Pengajuan_Surat ps 
@@ -47,36 +78,14 @@ $data_surat = $conn->query($query);
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Approval Surat - NamaWeb</title>
+  <title>Approval Surat - Desa Kosar</title>
   <link rel="stylesheet" href="../css/style.css" />
 </head>
 <body>
 
   <div class="layout-dashboard">
-    <div id="overlaySidebar" class="overlay-sidebar"></div>
-
-    <aside id="sidebar" class="sidebar">
-      <div class="sidebar-header">*Logo + NamaWeb</div>
-      <div class="sidebar-cari">
-        <input type="search" class="input-cari" placeholder="Search" />
-      </div>
-      <nav class="sidebar-nav">
-        <div class="sidebar-label">Dashboard <span class="sidebar-label-ikon">∧</span></div>
-        <div class="sidebar-sub">
-          <a href="dashboard-kades.php" class="sidebar-link"><span class="sidebar-link-ikon">🏠</span>Home</a>
-        </div>
-        <div class="sidebar-label">Layanan <span class="sidebar-label-ikon">∧</span></div>
-        <div class="sidebar-sub">
-          <a href="kades-request.php" class="sidebar-link aktif"><span class="sidebar-link-ikon">📩</span>Request Approval</a>
-          <a href="kades-disetujui.php" class="sidebar-link"><span class="sidebar-link-ikon">✅</span>Surat Disetujui</a>
-          <a href="kades-ditolak.php" class="sidebar-link"><span class="sidebar-link-ikon">❌</span>Surat Ditolak</a>
-        </div>
-        <div class="sidebar-label">Pengaturan <span class="sidebar-label-ikon">∧</span></div>
-        <div class="sidebar-sub">
-          <a href="profil.php" class="sidebar-link"><span class="sidebar-link-ikon">👤</span>Profil Saya</a>
-        </div>
-      </nav>
-    </aside>
+    <!-- PANGGIL SIDEBAR MASTER -->
+    <?php include 'sidebar.php'; ?>
 
     <div class="konten-dashboard">
       <header class="header-dashboard">
@@ -86,18 +95,20 @@ $data_surat = $conn->query($query);
           </button>
           <div class="header-pengguna">
             <h3>Halo, <?= htmlspecialchars($nama_kades) ?></h3>
-            <span>Kepala Desa</span>
+            <span>Kepala Desa Kosar</span>
           </div>
         </div>
         <form action="logout.php" method="POST" style="margin: 0;">
-            <button type="submit" class="avatar-pengguna" title="Keluar" onclick="return confirm('Keluar dari sistem?');" style="cursor:pointer;">👤</button>
+            <button type="submit" class="avatar-pengguna" title="Keluar" onclick="return confirm('Keluar dari sistem?');">👤</button>
         </form>
       </header>
 
       <main class="area-konten">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
-          <h1 style="font-family:var(--font-judul);font-size:1.5rem;font-weight:700;">Daftar Approval Surat</h1>
-          <p style="color:var(--warna-teks-muda);">Daftar permohonan yang telah diverifikasi oleh petugas.</p>
+          <div>
+            <h1 style="font-family:var(--font-judul);font-size:1.8rem;font-weight:700;">Daftar Approval Surat</h1>
+            <p style="color:var(--warna-teks-muda);">Daftar permohonan yang telah diverifikasi kelengkapannya oleh petugas.</p>
+          </div>
         </div>
 
         <div class="kartu-tabel">
@@ -109,7 +120,7 @@ $data_surat = $conn->query($query);
                 <th>Pemohon</th>
                 <th>Jenis Surat</th>
                 <th>Keperluan</th>
-                <th style="text-align:center;">Review Pengajuan</th>
+                <th style="text-align:center;">Review & Aksi</th>
               </tr>
             </thead>
             <tbody>
@@ -125,7 +136,7 @@ $data_surat = $conn->query($query);
                           
                           <a href="detail-surat.php?id=<?= $row['id_pengajuan'] ?>" class="btn-sekunder btn-kecil" style="text-decoration:none;" title="Lihat Lampiran & Catatan Petugas">🔍 Cek</a>
 
-                          <a href="?approve_id=<?= $row['id_pengajuan'] ?>" class="btn-primer btn-kecil" style="background:#22c55e; border:none; text-decoration:none;" onclick="return confirm('Menyetujui surat ini untuk di-upload oleh petugas?');">✔ Setujui</a>
+                          <a href="?approve_id=<?= $row['id_pengajuan'] ?>" class="btn-primer btn-kecil" style="background:#22c55e; border:none; text-decoration:none;" onclick="return confirm('Menyetujui surat ini? (Sistem akan otomatis mengirim email ke warga).');">✔ Setujui</a>
                           
                           <button onclick="tolakSuratKades(<?= $row['id_pengajuan'] ?>)" class="btn-sekunder btn-kecil" style="color:#ef4444; border-color:#ef4444; cursor:pointer;">✖ Tolak</button>
                       </td>
@@ -148,7 +159,7 @@ $data_surat = $conn->query($query);
   
   <script>
     function tolakSuratKades(idPengajuan) {
-        let alasan = prompt("Tulis alasan penolakan mutlak dari Kepala Desa (wajib diisi):");
+        let alasan = prompt("Tulis alasan penolakan mutlak dari Kepala Desa (Alasan ini akan dikirim ke Email warga):");
         
         if (alasan != null && alasan.trim() !== "") {
             window.location.href = "?reject_id=" + idPengajuan + "&alasan=" + encodeURIComponent(alasan);

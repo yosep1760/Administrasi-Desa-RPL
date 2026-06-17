@@ -36,32 +36,7 @@ $q_riwayat = $conn->query("
 <body>
 
   <div class="layout-dashboard">
-    <div id="overlaySidebar" class="overlay-sidebar"></div>
-
-    <aside id="sidebar" class="sidebar">
-      <div class="sidebar-header">*Logo + NamaWeb</div>
-      <div class="sidebar-cari">
-        <input type="search" class="input-cari" placeholder="Search" aria-label="Cari menu" />
-      </div>
-      <nav class="sidebar-nav">
-        <a href="dashboard.php" class="sidebar-link aktif">
-          <span class="sidebar-link-ikon">📊</span> Dashboard Saya
-        </a>
-        <div class="sidebar-label">Ajukan Surat <span class="sidebar-label-ikon">∧</span></div>
-        <div class="sidebar-sub">
-          <a href="pengajuan.php?id_jenis=1" class="sidebar-link"><span class="sidebar-link-ikon">✉</span> Surat Pengantar Nikah</a>
-          <a href="pengajuan.php?id_jenis=2" class="sidebar-link"><span class="sidebar-link-ikon">✉</span> Surat Keterangan Usaha</a>
-          <a href="pengajuan.php?id_jenis=3" class="sidebar-link"><span class="sidebar-link-ikon">✉</span> Surat Keterangan Domisili</a>
-          <a href="pengajuan.php?id_jenis=4" class="sidebar-link"><span class="sidebar-link-ikon">✉</span> Surat Lainnya</a>
-        </div>
-        <div class="sidebar-label">Informasi <span class="sidebar-label-ikon">∧</span></div>
-        <div class="sidebar-sub">
-          <a href="riwayat.php" class="sidebar-link"><span class="sidebar-link-ikon">🕐</span> Riwayat Pengajuan</a>
-          <a href="profil.php" class="sidebar-link"><span class="sidebar-link-ikon">👤</span> Profil Saya</a>
-        </div>
-      </nav>
-    </aside>
-
+    <?php include 'sidebar.php'; ?>
     <div class="konten-dashboard">
       <header class="header-dashboard">
         <div style="display:flex;align-items:center;gap:0.75rem;">

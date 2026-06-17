@@ -1,6 +1,12 @@
 <?php
-// Memanggil file rahasia (File ini TIDAK ADA di GitHub, nanti dibuat langsung di Rumahweb)
-$env = require __DIR__ . '/env.php';
+// Koneksi aman mengambil data dari env.php agar tidak bocor di GitHub
+$env_path = __DIR__ . '/env.php';
+
+if (!file_exists($env_path)) {
+    die("Sistem Error: File env.php tidak ditemukan. Harap buat file env.php di server.");
+}
+
+$env = require $env_path;
 
 $host = $env['DB_HOST'];
 $user = $env['DB_USER'];
