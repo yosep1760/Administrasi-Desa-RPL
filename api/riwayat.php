@@ -1,117 +1,89 @@
 <?php
 require 'koneksi.php';
 
-// Lindungi halaman dengan COOKIE
-if (!isset($_COOKIE['user_id']) || $_COOKIE['role'] != 'warga') {
+if (!isset($_COOKIE['user_id'])) {
     header("Location: login.php");
     exit;
 }
 
 $id_user = (int)$_COOKIE['user_id'];
-$nama_warga = $_COOKIE['nama'];
+$nama_user = $_COOKIE['nama'];
+$role_user = $_COOKIE['role'];
 
-// [UPDATE PDM] Ambil data riwayat surat dari tabel Pengajuan_Surat JOIN Jenis_Surat
-$query_riwayat = $conn->query("
-    SELECT ps.*, js.nama_surat 
-    FROM Pengajuan_Surat ps
-    JOIN Jenis_Surat js ON ps.id_jenis = js.id_jenis
-    WHERE ps.id_user = $id_user 
-    ORDER BY ps.tanggal_pengajuan DESC
-");
+// Jika Warga, hanya melihat miliknya. Jika bukan, melihat semua riwayat.
+if ($role_user == 'warga') {
+    $query = "SELECT ps.*, u.nama_lengkap, js.nama_surat FROM Pengajuan_Surat ps JOIN Users u ON ps.id_user = u.id_user JOIN Jenis_Surat js ON ps.id_jenis = js.id_jenis WHERE ps.id_user = $id_user ORDER BY ps.tanggal_pengajuan DESC";
+} else {
+    $query = "SELECT ps.*, u.nama_lengkap, js.nama_surat FROM Pengajuan_Surat ps JOIN Users u ON ps.id_user = u.id_user JOIN Jenis_Surat js ON ps.id_jenis = js.id_jenis ORDER BY ps.tanggal_pengajuan DESC";
+}
+
+$data_riwayat = $conn->query($query);
 ?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Riwayat Pengajuan - NamaWeb</title>
-  <link rel="stylesheet" href="../css/style.css" />
+  <meta charset="UTF-8">
+  <title>Riwayat Pengajuan - Desa Kosar</title>
+  <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
-
   <div class="layout-dashboard">
     <?php include 'sidebar.php'; ?>
 
     <div class="konten-dashboard">
       <header class="header-dashboard">
         <div style="display:flex;align-items:center;gap:0.75rem;">
-          <button id="tombolBukaSidebar" class="tombol-hamburger" style="display:flex;">
-            <span></span><span></span><span></span>
-          </button>
+          <button id="tombolBukaSidebar" class="tombol-hamburger" style="display:flex;"><span></span><span></span><span></span></button>
           <div class="header-pengguna">
-            <h3>Halo, <?= htmlspecialchars($nama_warga) ?></h3>
-            <span>Warga Desa</span>
+            <h3>Halo, <?= htmlspecialchars($nama_user) ?></h3>
+            <span style="text-transform: capitalize;"><?= str_replace('_', ' ', $role_user) ?></span>
           </div>
         </div>
-        <form action="logout.php" method="POST" style="margin: 0;">
-            <button type="submit" class="avatar-pengguna" title="Keluar" onclick="return confirm('Yakin ingin keluar?');" style="cursor:pointer;">👤</button>
-        </form>
+        <form action="logout.php" method="POST" style="margin: 0;"><button type="submit" class="avatar-pengguna">👤</button></form>
       </header>
 
       <main class="area-konten">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
-          <h1 style="font-family:var(--font-judul);font-size:1.5rem;font-weight:700;">Riwayat & Tracking Surat</h1>
+        <h1 style="font-family:var(--font-judul);font-size:1.8rem;font-weight:700;margin-bottom:1.5rem;">Riwayat Pengajuan</h1>
+
+        <div style="display:flex; gap:1rem; margin-bottom:1.5rem; flex-wrap:wrap;">
+            <input type="text" class="input-form" placeholder="Cari Nama Pemohon / Surat..." style="flex:1; max-width:400px;">
+            <button class="btn-sekunder" style="background:transparent; border:1px solid #000; color:#000;">≡ Jenis Surat</button>
+            <button class="btn-sekunder" style="background:transparent; border:1px solid #000; color:#000;">≡ Status</button>
         </div>
 
         <div class="kartu-tabel">
           <table class="tabel-data">
             <thead>
-              <tr>
-                <th>No</th>
-                <th>Tgl Pengajuan</th>
+              <tr style="background-color: #d1d5db;">
+                <th>#</th>
+                <th>Pemohon</th>
                 <th>Jenis Surat</th>
-                <th>Status Saat Ini</th>
-                <th style="text-align:center;">Aksi Lanjutan</th>
+                <th>Tanggal</th>
+                <th>Status</th>
+                <th style="text-align:center;">Aksi</th>
               </tr>
             </thead>
             <tbody>
-              <?php if ($query_riwayat->num_rows > 0): ?>
-                  <?php $no = 1; while($row = $query_riwayat->fetch_assoc()): ?>
-                    <?php 
-                      // Menerjemahkan ENUM Database menjadi Teks dan Warna Badge yang rapi
-                      $status_db = $row['status'];
-                      $badgeClass = 'badge-menunggu';
-                      $status_text = 'Menunggu';
-
-                      if ($status_db == 'menunggu_verifikasi') {
-                          $badgeClass = 'badge-menunggu'; // Kuning
-                          $status_text = 'Menunggu Petugas';
-                      } elseif ($status_db == 'menunggu_persetujuan') {
-                          $badgeClass = 'badge-verifikasi'; // Biru
-                          $status_text = 'Proses Kades';
-                      } elseif ($status_db == 'disetujui') {
-                          $badgeClass = 'badge-verifikasi'; // Biru
-                          $status_text = 'Disetujui (Tahap Cetak)';
-                      } elseif ($status_db == 'selesai') {
-                          $badgeClass = 'badge-disetujui'; // Hijau
-                          $status_text = 'Selesai';
-                      } elseif ($status_db == 'ditolak') {
-                          $badgeClass = 'badge-ditolak'; // Merah
-                          $status_text = 'Ditolak / Perbaikan';
-                      }
-                    ?>
-                    <tr>
-                      <td><?= $no++ ?></td>
-                      <td><?= date('d M Y, H:i', strtotime($row['tanggal_pengajuan'])) ?></td>
-                      <td><strong><?= htmlspecialchars($row['nama_surat']) ?></strong></td>
-                      <td><span class="badge <?= $badgeClass ?>"><?= $status_text ?></span></td>
-                      
-                      <td style="text-align:center;">
-                          <?php 
-                            // PERCABANGAN TOMBOL (Jika selesai = Cetak, jika belum = Detail)
-                            if ($status_db == 'selesai') {
-                                echo '<a href="cetak.php?id='.$row['id_pengajuan'].'" target="_blank" class="btn-primer btn-kecil" style="background:#16a34a; border:none; text-decoration:none;">🖨️ Cetak Dokumen</a>';
-                            } else {
-                                echo '<a href="detail-surat.php?id='.$row['id_pengajuan'].'" class="btn-sekunder btn-kecil" style="text-decoration:none;">🔍 Lihat Detail</a>';
-                            }
-                          ?>
-                      </td>
-                    </tr>
+              <?php if($data_riwayat->num_rows > 0): ?>
+                  <?php $no=1; while($row = $data_riwayat->fetch_assoc()): ?>
+                  <tr>
+                    <td><?= $no++ ?></td>
+                    <td><strong><?= htmlspecialchars($row['nama_lengkap']) ?></strong></td>
+                    <td><?= htmlspecialchars($row['nama_surat']) ?></td>
+                    <td><?= date('d - m - Y', strtotime($row['tanggal_pengajuan'])) ?></td>
+                    <td style="text-transform: capitalize;">
+                        <?= str_replace('_', ' ', $row['status']) ?>
+                    </td>
+                    <td style="text-align:center; display:flex; justify-content:center; gap:0.5rem;">
+                        <a href="detail-surat.php?id=<?= $row['id_pengajuan'] ?>" class="btn-sekunder btn-kecil" style="background:#9ca3af; color:white; border:none; border-radius:6px;">👁 Lihat</a>
+                        <?php if($row['status'] == 'selesai'): ?>
+                            <a href="cetak.php?id=<?= $row['id_pengajuan'] ?>" target="_blank" class="btn-sekunder btn-kecil" style="border:1px solid #000; border-radius:6px; color:#000;">📥</a>
+                        <?php endif; ?>
+                    </td>
+                  </tr>
                   <?php endwhile; ?>
               <?php else: ?>
-                  <tr>
-                    <td colspan="5" style="text-align:center; padding: 20px;">Anda belum memiliki riwayat pengajuan surat.</td>
-                  </tr>
+                  <tr><td colspan="6" style="text-align:center; padding:2rem;">Data riwayat kosong.</td></tr>
               <?php endif; ?>
             </tbody>
           </table>
@@ -120,7 +92,6 @@ $query_riwayat = $conn->query("
       </main>
     </div>
   </div>
-
-  <script src="../js/main.js"></script>
+  <script src="js/main.js"></script>
 </body>
 </html>

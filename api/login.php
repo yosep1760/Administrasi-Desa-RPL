@@ -1,43 +1,39 @@
 <?php
 require 'koneksi.php';
 
-// Jika sudah ada cookie (sudah login), lempar ke halaman yang sesuai
 if (isset($_COOKIE['user_id'])) {
-    if ($_COOKIE['role'] == 'kepala_desa') header("Location: dashboard-kades.php");
-    else if ($_COOKIE['role'] == 'petugas') header("Location: dashboard-petugas.php");
-    else header("Location: dashboard.php");
+    header("Location: dashboard.php");
     exit;
 }
 
-$error = "";
+$error = '';
 
-// Jika tombol login ditekan
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $nik = $conn->real_escape_string($_POST['nik']);
-    $password = $_POST['password'];
+    $email = $conn->real_escape_string($_POST['email']);
+    $password = $conn->real_escape_string($_POST['password']);
 
-    // [UPDATE PDM] Cari user di tabel Users menggunakan NIK
-    $result = $conn->query("SELECT * FROM Users WHERE NIK='$nik' AND password='$password'");
+    $query = $conn->query("SELECT * FROM Users WHERE email='$email' OR NIK='$email'");
+    
+    if ($query->num_rows > 0) {
+        $user = $query->fetch_assoc();
+        if ($password == $user['password']) {
+            setcookie('user_id', $user['id_user'], time() + (86400 * 30), "/");
+            setcookie('role', $user['role'], time() + (86400 * 30), "/");
+            setcookie('nama', $user['nama_lengkap'], time() + (86400 * 30), "/");
 
-    if ($result->num_rows > 0) {
-        $user = $result->fetch_assoc();
-
-        // Simpan data di COOKIE (Cocok untuk Vercel Serverless)
-        setcookie('user_id', $user['id_user'], time() + (86400 * 7), "/");
-        setcookie('nama', $user['nama_lengkap'], time() + (86400 * 7), "/");
-        setcookie('role', $user['role'], time() + (86400 * 7), "/");
-
-        // Arahkan ke dashboard sesuai role PDM
-        if ($user['role'] == 'kepala_desa') {
-            header("Location: dashboard-kades.php");
-        } else if ($user['role'] == 'petugas') {
-            header("Location: dashboard-petugas.php");
+            if ($user['role'] == 'kepala_desa') {
+                header("Location: dashboard-kades.php");
+            } elseif ($user['role'] == 'petugas') {
+                header("Location: dashboard-petugas.php");
+            } else {
+                header("Location: dashboard.php");
+            }
+            exit;
         } else {
-            header("Location: dashboard.php");
+            $error = "Password yang Anda masukkan salah!";
         }
-        exit;
     } else {
-        $error = "NIK atau Password salah!";
+        $error = "Akun tidak ditemukan! Silakan daftar terlebih dahulu.";
     }
 }
 ?>
@@ -46,53 +42,38 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Login - NamaWeb</title>
-  <link rel="stylesheet" href="../css/style.css" />
+  <title>Login - Desa Kosar</title>
+  <link rel="stylesheet" href="css/style.css" />
 </head>
-<body>
+<body style="background-color: #f1f5f9; display: flex; align-items: center; justify-content: center; min-height: 100vh;">
 
-  <div class="halaman-auth">
-    <div class="auth-dekorasi-1"></div>
-    <div class="auth-dekorasi-2"></div>
+  <div class="kartu-form" style="max-width: 400px; width: 100%; padding: 2.5rem 2rem;">
+    <div style="text-align: center; margin-bottom: 2rem;">
+      <h1 style="font-size: 1.5rem; font-weight: bold; color: var(--warna-primer); margin-bottom: 0.5rem;">Desa Kosar</h1>
+      <p style="color: var(--warna-teks-muda);">Sistem Layanan Administrasi</p>
+    </div>
 
-    <div class="kartu-auth">
-      <div class="auth-form-panel">
-        <h2>Login Sistem</h2>
+    <?php if($error): ?>
+        <div class="alert alert-bahaya"><?= $error ?></div>
+    <?php endif; ?>
 
-        <?php if($error != ""): ?>
-            <div style="background: #f8d7da; color: #721c24; padding: 10px; border-radius: 5px; margin-bottom: 15px; font-size: 0.9rem;">
-                <?= $error ?>
-            </div>
-        <?php endif; ?>
-
-        <form method="POST">
-
-          <div class="grup-input">
-            <label>NIK</label>
-            <input type="text" name="nik" class="input-teks" placeholder="Masukkan 16 digit NIK" required pattern="[0-9]{16}" />
-          </div>
-
-          <div class="grup-input">
-            <label>Password</label>
-            <input type="password" name="password" class="input-teks" placeholder="Masukkan password" required />
-          </div>
-
-          <div style="margin-top:1.25rem;">
-            <button type="submit" class="btn-primer" style="width:100%;">Masuk</button>
-          </div>
-
-        </form>
-
-        <div class="auth-link">
-          Belum punya akun? <a href="register.php">Sign Up</a>
-        </div>
-        
-        <div class="auth-link" style="margin-top:0.5rem;">
-          <a href="../index.php" style="color:var(--warna-teks-muda);">← Kembali ke Beranda</a>
-        </div>
+    <form method="POST">
+      <div class="grup-form">
+        <label>Email atau NIK</label>
+        <input type="text" name="email" class="input-form" placeholder="Masukkan Email atau NIK" required />
+      </div>
+      
+      <div class="grup-form">
+        <label>Password</label>
+        <input type="password" name="password" class="input-form" placeholder="Masukkan Password" required />
       </div>
 
-    </div>
+      <button type="submit" class="btn-primer" style="width: 100%; margin-top: 1rem;">Masuk Akun</button>
+    </form>
+
+    <p style="text-align: center; margin-top: 1.5rem; font-size: 0.9rem;">
+      Belum punya akun? <a href="register.php" style="color: var(--warna-info); font-weight: bold;">Daftar di sini</a>
+    </p>
   </div>
 
 </body>
