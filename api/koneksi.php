@@ -1,17 +1,15 @@
 <?php
-// Konfigurasi Database TiDB mengambil dari Environment Variables Vercel
-$host = getenv('DB_HOST');
-$user = getenv('DB_USER');
-$pass = getenv('DB_PASS');
-$db   = getenv('DB_NAME');
-$port = 4000;
+// Memanggil file rahasia (File ini TIDAK ADA di GitHub, nanti dibuat langsung di Rumahweb)
+$env = require __DIR__ . '/env.php';
 
-// Fungsi koneksi khusus Vercel & TiDB (SSL)
-$conn = mysqli_init();
-mysqli_ssl_set($conn, NULL, NULL, NULL, NULL, NULL);
-mysqli_real_connect($conn, $host, $user, $pass, $db, $port, NULL, MYSQLI_CLIENT_SSL);
+$host = $env['DB_HOST'];
+$user = $env['DB_USER'];
+$pass = $env['DB_PASS'];
+$db   = $env['DB_NAME'];
+
+$conn = new mysqli($host, $user, $pass, $db);
 
 if ($conn->connect_error) {
-    die("Koneksi Database Gagal. Server sedang sibuk."); // Jangan tampilkan pesan error asli ke publik
+    die("Koneksi Database Gagal. Server sedang sibuk.");
 }
 ?>
