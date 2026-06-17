@@ -1,29 +1,38 @@
 <?php
 require 'koneksi.php';
 
+// Cek COOKIE
 if (!isset($_COOKIE['user_id']) || $_COOKIE['role'] != 'warga') {
     header("Location: login.php");
     exit;
 }
 
-$id_user = $_COOKIE['user_id'];
+$id_user = (int)$_COOKIE['user_id'];
 $nama_warga = $_COOKIE['nama'];
 
-// Mengambil Data Statistik Warga
-$c_total = $conn->query("SELECT COUNT(*) as c FROM Pengajuan_Surat WHERE id_user=$id_user")->fetch_assoc()['c'];
-$c_proses = $conn->query("SELECT COUNT(*) as c FROM Pengajuan_Surat WHERE id_user=$id_user AND status IN ('menunggu_verifikasi', 'menunggu_persetujuan')")->fetch_assoc()['c'];
-$c_selesai = $conn->query("SELECT COUNT(*) as c FROM Pengajuan_Surat WHERE id_user=$id_user AND status='selesai'")->fetch_assoc()['c'];
+// Ambil data statistik warga
+$q_total = $conn->query("SELECT COUNT(*) as total FROM Pengajuan_Surat WHERE id_user = $id_user")->fetch_assoc()['total'];
+$q_proses = $conn->query("SELECT COUNT(*) as proses FROM Pengajuan_Surat WHERE id_user = $id_user AND status = 'menunggu_verifikasi'")->fetch_assoc()['proses'];
+$q_kades = $conn->query("SELECT COUNT(*) as kades FROM Pengajuan_Surat WHERE id_user = $id_user AND status = 'menunggu_persetujuan'")->fetch_assoc()['kades'];
+$q_setuju = $conn->query("SELECT COUNT(*) as setuju FROM Pengajuan_Surat WHERE id_user = $id_user AND status IN ('disetujui', 'selesai')")->fetch_assoc()['setuju'];
 
-// Mengambil Riwayat 5 Pengajuan Terbaru
-$q_riwayat = $conn->query("SELECT ps.*, js.nama_surat FROM Pengajuan_Surat ps JOIN Jenis_Surat js ON ps.id_jenis = js.id_jenis WHERE ps.id_user = $id_user ORDER BY ps.tanggal_pengajuan DESC LIMIT 5");
+// Ambil 3 pengajuan terakhir
+$query_terakhir = "
+    SELECT ps.*, js.nama_surat 
+    FROM Pengajuan_Surat ps 
+    JOIN Jenis_Surat js ON ps.id_jenis = js.id_jenis 
+    WHERE ps.id_user = $id_user 
+    ORDER BY ps.tanggal_pengajuan DESC LIMIT 3
+";
+$riwayat_terbaru = $conn->query($query_terakhir);
 ?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard Warga - Desa Kosar</title>
-  <link rel="stylesheet" href="css/style.css" />
+  <title>Dashboard Warga - SiKosar</title>
+  <link rel="stylesheet" href="../css/style.css" />
 </head>
 <body>
 
@@ -42,71 +51,82 @@ $q_riwayat = $conn->query("SELECT ps.*, js.nama_surat FROM Pengajuan_Surat ps JO
           </div>
         </div>
         <form action="logout.php" method="POST" style="margin: 0;">
-            <button type="submit" class="avatar-pengguna" title="Keluar dari akun">👤</button>
+            <button type="submit" class="avatar-pengguna" title="Keluar" onclick="return confirm('Yakin ingin keluar?');" style="cursor:pointer;">👤</button>
         </form>
       </header>
 
       <main class="area-konten">
-        <h1 style="font-family:var(--font-judul);font-size:1.8rem;font-weight:700;margin-bottom:1.5rem;">Dashboard Saya</h1>
+        <h1 style="font-family:var(--font-judul);font-size:1.5rem;font-weight:700;margin-bottom:1.5rem;">
+          Dashboard Saya
+        </h1>
 
         <div class="grid-statistik">
           <div class="kartu-statistik">
-            <div class="statistik-angka"><?= $c_total ?> 📄</div>
-            <div class="statistik-label">Total Pengajuan</div>
+            <div class="statistik-angka"><?= $q_total ?> <span class="statistik-naik">↑</span></div>
+            <div class="statistik-label">Total Diajukan</div>
           </div>
           <div class="kartu-statistik">
-            <div class="statistik-angka" style="color: #f59e0b;"><?= $c_proses ?> ⏳</div>
-            <div class="statistik-label">Sedang Diproses</div>
+            <div class="statistik-angka"><?= $q_proses ?></div>
+            <div class="statistik-label">Diperiksa Petugas</div>
           </div>
           <div class="kartu-statistik">
-            <div class="statistik-angka" style="color: #10b981;"><?= $c_selesai ?> ✅</div>
+            <div class="statistik-angka"><?= $q_kades ?></div>
+            <div class="statistik-label">Menunggu Kades</div>
+          </div>
+          <div class="kartu-statistik">
+            <div class="statistik-angka"><?= $q_setuju ?> <span class="statistik-naik">✓</span></div>
             <div class="statistik-label">Surat Selesai</div>
           </div>
         </div>
 
-        <h3 style="margin-top:2rem; margin-bottom:1rem; font-weight:700;">Pengajuan Terbaru</h3>
-        
-        <div class="kartu-tabel">
-          <table class="tabel-data">
-            <thead>
-              <tr>
-                <th>No</th>
-                <th>Jenis Surat</th>
-                <th>Tanggal Masuk</th>
-                <th>Status</th>
-                <th>Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              <?php if($q_riwayat->num_rows > 0): ?>
-                  <?php $no=1; while($row = $q_riwayat->fetch_assoc()): ?>
+        <div class="kartu-tabel" style="margin-top: 2rem;">
+          <div class="kartu-tabel-header">
+            <h3>Pengajuan Surat Terbaru Saya</h3>
+            <a href="riwayat.php">Lihat semua &rarr;</a>
+          </div>
+          
+          <?php if($riwayat_terbaru->num_rows > 0): ?>
+            <div class="tabel-wrapper" style="overflow-x:auto;">
+              <table style="width:100%; text-align:left; border-collapse:collapse;">
+                <thead style="border-bottom:1px solid var(--warna-border);">
                   <tr>
-                    <td><?= $no++ ?></td>
-                    <td><strong><?= htmlspecialchars($row['nama_surat']) ?></strong></td>
-                    <td><?= date('d M Y', strtotime($row['tanggal_pengajuan'])) ?></td>
-                    <td style="text-transform: capitalize;">
-                        <span class="badge badge-<?= str_replace('_', '-', $row['status']) ?>">
-                            <?= str_replace('_', ' ', $row['status']) ?>
-                        </span>
-                    </td>
-                    <td>
-                        <a href="detail-surat.php?id=<?= $row['id_pengajuan'] ?>" class="btn-sekunder btn-kecil">Cek Detail</a>
-                    </td>
+                    <th style="padding:1rem;">Tanggal</th>
+                    <th style="padding:1rem;">Jenis Surat</th>
+                    <th style="padding:1rem;">Status</th>
+                    <th style="padding:1rem;">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <?php while($row = $riwayat_terbaru->fetch_assoc()): 
+                        $status = $row['status'];
+                        if($status == 'menunggu_verifikasi') { $badge = "badge-menunggu"; $teks_status = "Diperiksa Petugas"; }
+                        elseif($status == 'menunggu_persetujuan') { $badge = "badge-verifikasi"; $teks_status = "Menunggu Kades"; }
+                        elseif($status == 'disetujui') { $badge = "badge-verifikasi"; $teks_status = "Disetujui / Tahap Cetak"; }
+                        elseif($status == 'selesai') { $badge = "badge-disetujui"; $teks_status = "Selesai (Siap Ambil)"; }
+                        elseif($status == 'ditolak') { $badge = "badge-ditolak"; $teks_status = "Ditolak"; }
+                  ?>
+                  <tr style="border-bottom:1px solid var(--warna-border);">
+                    <td style="padding:1rem;"><?= date('d M Y', strtotime($row['tanggal_pengajuan'])) ?></td>
+                    <td style="padding:1rem; font-weight:600;"><?= htmlspecialchars($row['nama_surat']) ?></td>
+                    <td style="padding:1rem;"><span class="badge <?= $badge ?>"><?= $teks_status ?></span></td>
+                    <td style="padding:1rem;"><a href="detail-surat.php?id=<?= $row['id_pengajuan'] ?>" class="btn-sekunder btn-kecil" style="text-decoration:none;">Lacak Status</a></td>
                   </tr>
                   <?php endwhile; ?>
-              <?php else: ?>
-                  <tr>
-                    <td colspan="5" style="text-align:center; padding:2rem;">Anda belum pernah mengajukan surat.</td>
-                  </tr>
-              <?php endif; ?>
-            </tbody>
-          </table>
+                </tbody>
+              </table>
+            </div>
+          <?php else: ?>
+            <div style="padding:2rem; text-align:center; color:var(--warna-teks-muda);">
+                Belum ada pengajuan surat yang Anda buat. <br><br>
+                <a href="pengajuan.php" class="btn-primer">Mulai Ajukan Surat</a>
+            </div>
+          <?php endif; ?>
         </div>
 
       </main>
     </div>
   </div>
 
-  <script src="js/main.js"></script>
+  <script src="../js/main.js"></script>
 </body>
 </html>
