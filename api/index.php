@@ -1,5 +1,5 @@
 <?php
-// Tidak menggunakan session_start() lagi karena kita menggunakan $_COOKIE
+// Homepage Desa Kosar
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -7,11 +7,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Desa Kosar - Sistem Layanan Administrasi</title>
-  <link rel="stylesheet" href="../css/style.css" />
-  <!-- Menambahkan Swiper CSS untuk Carousel -->
+  <link rel="stylesheet" href="css/style.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
   <style>
-    /* Styling khusus untuk Swiper di Homepage */
     .swiper { width: 100%; padding-bottom: 3rem; }
     .swiper-slide { height: auto; }
     .swiper-pagination-bullet-active { background-color: var(--warna-aksen); }
@@ -76,10 +74,8 @@
         <p>Pilih jenis surat yang ingin diajukan dan lakukan proses pengurusan dengan mudah. (Geser untuk melihat semua)</p>
       </div>
       
-      <!-- SWIPER CAROUSEL (POIN 2) -->
       <div class="swiper mySwiper">
         <div class="swiper-wrapper">
-          <!-- Slide 1 -->
           <div class="swiper-slide">
             <div class="kartu-layanan" onclick="window.location.href='login.php'">
               <div class="kartu-layanan-gambar">✉️</div>
@@ -87,7 +83,6 @@
               <p>Bukti resmi domisili warga di Desa Kosar untuk berbagai keperluan administrasi.</p>
             </div>
           </div>
-          <!-- Slide 2 -->
           <div class="swiper-slide">
             <div class="kartu-layanan" onclick="window.location.href='login.php'">
               <div class="kartu-layanan-gambar">🏪</div>
@@ -95,7 +90,6 @@
               <p>Keterangan resmi menjalankan usaha di wilayah desa, untuk izin atau perbankan.</p>
             </div>
           </div>
-          <!-- Slide 3 -->
           <div class="swiper-slide">
             <div class="kartu-layanan" onclick="window.location.href='login.php'">
               <div class="kartu-layanan-gambar">📋</div>
@@ -103,7 +97,6 @@
               <p>Surat pengantar desa sebagai syarat pembuatan SKCK di kepolisian.</p>
             </div>
           </div>
-          <!-- Slide 4 -->
           <div class="swiper-slide">
             <div class="kartu-layanan" onclick="window.location.href='login.php'">
               <div class="kartu-layanan-gambar">🔍</div>
@@ -111,7 +104,6 @@
               <p>Surat pengantar untuk melaporkan kehilangan barang/dokumen ke pihak berwajib.</p>
             </div>
           </div>
-          <!-- Slide 5 -->
           <div class="swiper-slide">
             <div class="kartu-layanan" onclick="window.location.href='login.php'">
               <div class="kartu-layanan-gambar">💰</div>
@@ -126,7 +118,6 @@
     </div>
   </section>
 
-  <!-- Swiper JS Script -->
   <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
   <script>
     var swiper = new Swiper(".mySwiper", {
